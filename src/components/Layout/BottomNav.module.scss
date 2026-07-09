@@ -1,0 +1,44 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the BottomNav component in a frontend application. It includes styles for the navigation container and items, ensuring a consistent and visually appealing design. The bottom navigation is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: $bottom-nav-height;
+  background: $color-surface;
+  border-top: 1px solid $color-border;
+  display: flex;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.item {
+  @include focus-ring;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  color: $color-text-muted;
+  text-decoration: none;
+  font-size: 1.1rem;
+}
+
+.itemIcon {
+  font-size: 1.8rem;
+}
+
+.itemActive {
+  color: $color-primary;
+  font-weight: 600;
+}

@@ -1,0 +1,51 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the TokoSalePage in a frontend application. It includes styles for the form container, ensuring a consistent and visually appealing design. The TokoSalePage is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience. 
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.addForm {
+  @include card;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-3;
+  margin-bottom: $space-5;
+
+  @include respond('tablet') {
+    grid-template-columns: 2fr 1fr 1fr auto;
+    align-items: end;
+  }
+}
+
+.totalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: $space-4 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  @include tabular-nums;
+}
+
+.footerRow {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  align-items: flex-start;
+
+  @include respond('tablet') {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.paymentField {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}

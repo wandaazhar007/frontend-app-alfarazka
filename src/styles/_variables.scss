@@ -1,0 +1,69 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the design tokens for a frontend application. It includes variables for colors, typography, spacing, border radius, shadows, layout dimensions, and breakpoints. The design tokens serve as the single source of truth for the application's visual design, ensuring consistency and maintainability across different components and pages.
+*/
+
+// Design tokens — the single source of truth for colors/spacing/radius/etc.
+// Don't duplicate these values anywhere else (see docs/07_DESIGN_SYSTEM.md).
+
+// ---- Colors: brand ----
+$color-primary: #e63946; // Alfarazka red — main action, 1 per view
+$color-primary-dark: #b3242f; // for StatCard highlight gradient
+$color-primary-soft: rgba(230, 53, 70, 0.08); // active nav background, focus ring
+
+$color-accent: #f4a261; // cream/oven tone — warmth, not an action
+$color-accent-soft: #fdf0e2; // license info banner, empty state, welcome card
+
+// ---- Colors: status ----
+$color-success: #16a34a;
+$color-warning: #d97706;
+$color-danger: #dc2626; // destructive/error — DIFFERENT from $color-primary
+
+// ---- Colors: neutral & layout ----
+$color-bg: #ffffff;
+$color-bg-soft: #f7f5f3; // table row hover, alternate page background
+$color-surface: #ffffff; // cards, panels
+$color-surface-muted: #f4f4f5; // table header, skeleton
+$color-border: #e5e7eb;
+
+$color-text-main: #1f2937;
+$color-text-muted: #6b7280;
+$color-text-soft: #9ca3af; // sidebar group label, most muted text
+
+// ---- Typography ----
+$font-family-heading: 'Poppins', system-ui, sans-serif;
+$font-family-base: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+// ---- Spacing (base 62.5% => 1rem = 10px) ----
+$space-1: 0.4rem; // 4px
+$space-2: 0.8rem; // 8px
+$space-3: 1.2rem; // 12px
+$space-4: 1.6rem; // 16px
+$space-5: 2rem; // 20px
+$space-6: 2.4rem; // 24px
+$space-8: 3.2rem; // 32px
+
+// ---- Radius ----
+$radius-sm: 0.4rem;
+$radius-md: 0.8rem;
+$radius-lg: 1.2rem;
+$radius-xl: 1.6rem;
+$radius-pill: 999rem;
+
+// ---- Shadows ----
+$shadow-soft: 0 0.1rem 0.3rem rgba(17, 24, 39, 0.06), 0 0.2rem 0.6rem rgba(17, 24, 39, 0.04);
+$shadow-card: 0 0.4rem 1.2rem rgba(17, 24, 39, 0.08), 0 0.1rem 0.3rem rgba(17, 24, 39, 0.06);
+
+// ---- Layout ----
+$sidebar-width: 24rem;
+$navbar-height: 6.4rem;
+$layout-max-width: 128rem;
+$bottom-nav-height: 6.4rem; // seller bottom nav (mobile)
+
+// ---- Breakpoints (px = allowed exception per spec) ----
+$breakpoints: (
+  tablet: 768px,
+  desktop: 1280px,
+);

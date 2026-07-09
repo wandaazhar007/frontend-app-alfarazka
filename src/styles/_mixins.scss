@@ -1,0 +1,50 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the mixins for a frontend application. It includes reusable styles for responsive design, card components, focus rings, text truncation, tabular numbers, and reduced motion preferences. The mixins ensure a consistent and visually appealing design across the application, with appropriate spacing, typography, and accessibility considerations for better readability and user experience.
+*/
+
+@use 'sass:map';
+@use 'variables' as *;
+
+// Mobile-first: min-width
+@mixin respond($bp) {
+  $size: map.get($breakpoints, $bp);
+
+  @media (min-width: $size) {
+    @content;
+  }
+}
+
+@mixin card {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-soft;
+  padding: $space-4;
+}
+
+@mixin focus-ring {
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Angka uang/statistik — rata di tabel, tidak "melompat" antar baris
+@mixin tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}

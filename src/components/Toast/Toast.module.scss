@@ -1,0 +1,90 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the Toast component in a frontend application. It includes styles for the toast container and its child elements, ensuring a consistent and visually appealing design. The Toast component is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.container {
+  position: fixed;
+  top: $space-4;
+  right: $space-4;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  max-width: 36rem;
+  width: calc(100% - #{$space-8});
+
+  @include respond('tablet') {
+    width: 36rem;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-0.8rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-2;
+  background: $color-surface;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+  padding: $space-3 $space-4;
+  border-left: 3px solid transparent;
+  font-size: 1.3rem;
+  color: $color-text-main;
+  animation: slideIn 0.15s ease-out;
+
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+.success {
+  border-left-color: $color-success;
+
+  .icon {
+    color: $color-success;
+  }
+}
+
+.danger {
+  border-left-color: $color-danger;
+
+  .icon {
+    color: $color-danger;
+  }
+}
+
+.icon {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.message {
+  flex: 1;
+}
+
+.closeButton {
+  @include focus-ring;
+  background: none;
+  border: none;
+  color: $color-text-muted;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}

@@ -1,0 +1,83 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the Badge component in a frontend application. It includes styles for different badge types such as success, warning, danger, and neutral, each with specific background colors and text colors. The badge is designed to be displayed inline with other elements, with rounded corners and padding for better visual appeal.
+*/
+
+@use 'sass:color';
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.button {
+  @include focus-ring;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  border-radius: $radius-md;
+  border: 1px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+// ---- ukuran ----
+// Target sentuhan nyaman untuk pengguna awam (§7 mensyaratkan minimal 4.4rem
+// untuk halaman seller di HP) — dipakai sebagai default di semua ukuran, bukan
+// cuma seller, supaya tombol tidak terasa kekecilan di layar manapun.
+.md {
+  height: 4.8rem;
+  padding: 0 $space-5;
+  font-size: 1.5rem;
+}
+
+.sm {
+  height: 4rem;
+  padding: 0 $space-4;
+  font-size: 1.4rem;
+}
+
+// ---- varian ----
+.primary {
+  background: $color-primary;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-dark;
+  }
+}
+
+.secondary {
+  background: $color-surface;
+  color: $color-text-main;
+  border-color: $color-border;
+
+  &:hover:not(:disabled) {
+    background: $color-bg-soft;
+  }
+}
+
+.ghost {
+  background: transparent;
+  color: $color-text-main;
+
+  &:hover:not(:disabled) {
+    background: $color-bg-soft;
+  }
+}
+
+.danger {
+  background: $color-danger;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: color.adjust($color-danger, $lightness: -8%);
+  }
+}

@@ -1,0 +1,59 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the FormField component in a frontend application. It includes styles for the field container, label, and input elements, ensuring a consistent and visually appealing design. The form field is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.label {
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: $color-text-main;
+}
+
+.required {
+  color: $color-danger;
+}
+
+// Target input/select/textarea APAPUN yang jadi children — form-form ini pakai native
+// <input>/<select> langsung (bukan komponen Input terpisah) supaya tetap fleksibel.
+.field :global(input),
+.field :global(select),
+.field :global(textarea) {
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: $space-2 $space-3;
+  background: $color-surface;
+  color: $color-text-main;
+  @include focus-ring;
+
+  &:focus {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px $color-primary-soft;
+  }
+}
+
+.fieldError :global(input),
+.fieldError :global(select),
+.fieldError :global(textarea) {
+  border-color: $color-danger;
+}
+
+.errorText {
+  font-size: 1.2rem;
+  color: $color-danger;
+}
+
+.helpText {
+  font-size: 1.2rem;
+  color: $color-text-muted;
+}

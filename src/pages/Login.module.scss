@@ -1,0 +1,160 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the Login page in a frontend application. It includes styles for the page layout, left and right panels, logo, tagline, card container, title, subtitle, form, error box, submit button, link button, and success box, ensuring a consistent and visually appealing design. The Login page is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience. 
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  background: $color-bg;
+}
+
+// ---- Panel kiri: brand, hanya tampil di desktop (§11) ----
+.leftPanel {
+  display: none;
+
+  @include respond('desktop') {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 45%;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+    padding: $space-8;
+
+    // Elemen dekoratif halus — pola titik, opacity rendah, jangan ramai.
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.08;
+      background-image: radial-gradient(circle, #fff 1.5px, transparent 1.5px);
+      background-size: 2.8rem 2.8rem;
+    }
+  }
+}
+
+.leftContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-6;
+  max-width: 40rem;
+  text-align: center;
+}
+
+.logoCircle {
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: $shadow-card;
+
+  img {
+    width: 8rem;
+    height: 8rem;
+    object-fit: contain;
+  }
+}
+
+.tagline {
+  color: #fff;
+  font-size: 1.8rem;
+  line-height: 1.5;
+}
+
+// ---- Panel kanan: form ----
+.rightPanel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $space-4;
+
+  @include respond('desktop') {
+    flex: 0 0 55%;
+  }
+}
+
+.card {
+  @include card;
+  width: 100%;
+  max-width: 42rem;
+  padding: $space-6;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.smallLogo {
+  width: 5.6rem;
+  height: 5.6rem;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 2rem;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 1.4rem;
+  color: $color-text-muted;
+  text-align: center;
+  margin-top: -#{$space-2};
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.errorBox {
+  background: rgba(220, 38, 38, 0.08);
+  color: $color-danger;
+  border-radius: $radius-md;
+  padding: $space-3;
+  font-size: 1.3rem;
+}
+
+.submitButton {
+  width: 100%;
+}
+
+.linkButton {
+  @include focus-ring;
+  background: none;
+  border: none;
+  color: $color-primary;
+  font-size: 1.3rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  padding: $space-1;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.successBox {
+  background: rgba(22, 163, 74, 0.08);
+  color: $color-success;
+  border-radius: $radius-md;
+  padding: $space-3;
+  font-size: 1.3rem;
+}

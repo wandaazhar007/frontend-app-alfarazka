@@ -1,0 +1,58 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the LicensePage in a frontend application. It includes styles for the status card, section title, plan grid, plan card, plan name, plan price, and plan duration, ensuring a consistent and visually appealing design. The LicensePage is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience. 
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.statusCard {
+  @include card;
+  margin-bottom: $space-6;
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.sectionTitle {
+  font-size: 1.6rem;
+  margin-bottom: $space-3;
+}
+
+.planGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-3;
+  margin-bottom: $space-6;
+
+  @include respond('tablet') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.planCard {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.planName {
+  font-family: $font-family-heading;
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.planPrice {
+  font-size: 2rem;
+  font-weight: 700;
+  @include tabular-nums;
+  color: $color-primary;
+}
+
+.planDuration {
+  color: $color-text-muted;
+  font-size: 1.3rem;
+}

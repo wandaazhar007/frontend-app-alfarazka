@@ -1,0 +1,43 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the StatCard component in a frontend application. It includes styles for the card container and its child elements, ensuring a consistent and visually appealing design. The StatCard component is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.card {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.label {
+  font-size: 1.2rem;
+  color: $color-text-muted;
+}
+
+.value {
+  font-family: $font-family-heading;
+  font-size: 2.4rem;
+  font-weight: 700;
+  @include tabular-nums;
+  color: $color-text-main;
+}
+
+// Signature element — maksimal 1 per halaman (mis. "Penjualan Hari Ini")
+.highlight {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  border-color: transparent;
+
+  .label {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .value {
+    color: #fff;
+  }
+}

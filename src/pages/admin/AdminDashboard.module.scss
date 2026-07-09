@@ -1,0 +1,71 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the AdminDashboard page in a frontend application. It includes styles for the statGrid, sectionTitle, quickActions, quickAction, quickActionIcon, and quickActionLabel elements, ensuring a consistent and visually appealing design. The AdminDashboard page is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience. 
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.statGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-3;
+  margin-bottom: $space-6;
+
+  @include respond('tablet') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond('desktop') {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sectionTitle {
+  font-size: 1.6rem;
+  margin-bottom: $space-3;
+}
+
+.quickActions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-3;
+
+  @include respond('tablet') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond('desktop') {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.quickAction {
+  @include card;
+  @include focus-ring;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  text-decoration: none;
+  color: $color-text-main;
+  text-align: center;
+  min-height: 12rem;
+
+  &:hover {
+    border-color: $color-primary;
+  }
+}
+
+.quickActionIcon {
+  font-size: 2.4rem;
+  color: $color-primary;
+}
+
+.quickActionLabel {
+  font-weight: 600;
+  font-size: 1.4rem;
+}

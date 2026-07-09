@@ -1,0 +1,36 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the EmptyState component in a frontend application. It includes styles for the wrapper, icon, and text elements, ensuring a consistent and visually appealing design. The EmptyState component is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: $space-3;
+  padding: $space-8 $space-4;
+  color: $color-text-muted;
+}
+
+.icon {
+  font-size: 3.2rem;
+  color: $color-text-soft;
+  background: $color-accent-soft;
+  width: 6.4rem;
+  height: 6.4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text {
+  font-size: 1.4rem;
+  color: $color-text-muted;
+}

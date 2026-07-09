@@ -1,0 +1,28 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the Card component in a frontend application. It includes styles for the card container, header, and title, ensuring a consistent and visually appealing design. The card is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.card {
+  @include card;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  margin-bottom: $space-4;
+}
+
+.title {
+  font-family: $font-family-heading;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: $color-text-main;
+}

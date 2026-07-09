@@ -1,0 +1,24 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the SellerDashboard page in a frontend application. It includes styles for the section title and stat grid, ensuring a consistent and visually appealing design. The SellerDashboard is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience. 
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.sectionTitle {
+  font-size: 1.6rem;
+  margin: $space-5 0 $space-3;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-3;
+
+  @include respond('tablet') {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

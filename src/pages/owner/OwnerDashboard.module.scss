@@ -1,0 +1,74 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the OwnerDashboard page in a frontend application. It includes styles for the stat grid, breakdown grid, sections, and charts grid, ensuring a consistent and visually appealing design. The OwnerDashboard is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience. 
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.statGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-3;
+  margin-bottom: $space-6;
+
+  @include respond('tablet') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond('desktop') {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.breakdownGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-3;
+  margin-bottom: $space-6;
+
+  @include respond('tablet') {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.section {
+  margin-bottom: $space-6;
+}
+
+.sectionTitle {
+  font-size: 1.6rem;
+  margin-bottom: $space-3;
+}
+
+.dateInput {
+  height: 4rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 0 $space-3;
+  @include focus-ring;
+}
+
+.hint {
+  font-size: 1.3rem;
+  color: $color-text-muted;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-4;
+  margin-bottom: $space-6;
+
+  @include respond('desktop') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.chartToggle {
+  display: flex;
+  gap: $space-2;
+  margin-bottom: $space-2;
+}

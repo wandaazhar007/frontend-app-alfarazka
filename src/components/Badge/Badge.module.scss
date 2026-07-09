@@ -1,0 +1,38 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the Badge component in a frontend application. It includes styles for different badge types such as success, warning, danger, and neutral, each with specific background colors and text colors. The badge is designed to be displayed inline with other elements, with rounded corners and padding for better visual appeal.
+*/
+
+@use '@/styles/variables' as *;
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: $radius-pill;
+  padding: $space-1 $space-3;
+  font-size: 1.2rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.success {
+  background: rgba(22, 163, 74, 0.12);
+  color: $color-success;
+}
+
+.warning {
+  background: rgba(217, 119, 6, 0.14);
+  color: $color-warning;
+}
+
+.danger {
+  background: rgba(220, 38, 38, 0.12);
+  color: $color-danger;
+}
+
+.neutral {
+  background: $color-surface-muted;
+  color: $color-text-muted;
+}

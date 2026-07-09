@@ -1,0 +1,83 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the Table component in a frontend application. It includes styles for the table wrapper, table elements, and responsive card list for mobile view, ensuring a consistent and visually appealing design. The Table component is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience. 
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+// ---- Desktop/tablet: regular table ----
+.tableWrapper {
+  display: none;
+
+  @include respond('tablet') {
+    display: block;
+  }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  background: $color-surface-muted;
+  color: $color-text-muted;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+  padding: $space-3 $space-4;
+}
+
+.table td {
+  border-bottom: 1px solid $color-border;
+  padding: $space-3 $space-4;
+  font-size: 1.4rem;
+}
+
+.table tbody tr:hover {
+  background: $color-bg-soft;
+}
+
+.alignRight {
+  text-align: right;
+  @include tabular-nums;
+}
+
+// ---- Mobile: card stacking (do not horizontal scroll — §8.12) ----
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+
+  @include respond('tablet') {
+    display: none;
+  }
+}
+
+.rowCard {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.rowCardItem {
+  display: flex;
+  justify-content: space-between;
+  gap: $space-3;
+  font-size: 1.4rem;
+}
+
+.rowCardLabel {
+  color: $color-text-muted;
+  font-size: 1.2rem;
+}
+
+.rowCardValue {
+  @include tabular-nums;
+  text-align: right;
+}

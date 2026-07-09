@@ -1,0 +1,34 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the ExpensesPage in a frontend application. It includes styles for the date input and stat grid, ensuring a consistent and visually appealing design. The ExpensesPage is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.dateInput {
+  height: 4rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 0 $space-3;
+  @include focus-ring;
+}
+
+.form {
+  @include card;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-3;
+  margin-bottom: $space-5;
+
+  @include respond('tablet') {
+    grid-template-columns: repeat(3, 1fr) auto;
+    align-items: end;
+  }
+}
+
+.mealAllowanceRow {
+  margin-bottom: $space-4;
+}

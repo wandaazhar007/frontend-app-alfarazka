@@ -1,0 +1,83 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the AppLayout component in a frontend application. It includes styles for the main shell, sidebar, and content areas, ensuring a consistent and visually appealing design. The layout is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background: $color-bg;
+}
+
+// Sidebar desktop asli — hanya dirender lewat <Sidebar/> yang sudah "display:flex"
+// bawaan; di mobile disembunyikan supaya versi drawer yang tampil.
+.desktopSidebar {
+  display: none;
+
+  @include respond('desktop') {
+    display: block;
+  }
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: $layout-max-width;
+  margin: 0 auto;
+  padding: $space-4;
+
+  @include respond('desktop') {
+    padding: $space-6;
+  }
+}
+
+// ---- Drawer mobile/tablet ----
+.drawerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.5);
+  z-index: 200;
+
+  @include respond('desktop') {
+    display: none;
+  }
+}
+
+.drawerPanel {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 201;
+  transform: translateX(0);
+
+  @include respond('desktop') {
+    display: none;
+  }
+}
+
+.drawerCloseButton {
+  @include focus-ring;
+  position: absolute;
+  top: $space-3;
+  right: -4.4rem;
+  width: 4rem;
+  height: 4rem;
+  border-radius: $radius-md;
+  border: none;
+  background: $color-surface;
+  color: $color-text-main;
+  cursor: pointer;
+}

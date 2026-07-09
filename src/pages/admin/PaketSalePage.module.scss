@@ -1,0 +1,33 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the PaketSalePage in a frontend application. It includes styles for the form container, ensuring a consistent and visually appealing design. The PaketSalePage is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.form {
+  @include card;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-3;
+  max-width: 48rem;
+
+  @include respond('tablet') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.fullWidth {
+  @include respond('tablet') {
+    grid-column: 1 / -1;
+  }
+}
+
+.hint {
+  font-size: 1.3rem;
+  color: $color-text-muted;
+  margin-bottom: $space-4;
+}

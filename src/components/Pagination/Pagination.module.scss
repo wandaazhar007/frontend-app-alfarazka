@@ -1,0 +1,66 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the Pagination component in a frontend application. It includes styles for the wrapper, info text, page buttons, and ellipsis, ensuring a consistent and visually appealing design. The Pagination component is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: $space-4;
+
+  @include respond('tablet') {
+    flex-direction: row;
+  }
+}
+
+.info {
+  font-size: 1.3rem;
+  color: $color-text-muted;
+}
+
+.pages {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+}
+
+.pageButton {
+  @include focus-ring;
+  min-width: 3.6rem;
+  height: 3.6rem;
+  padding: 0 $space-2;
+  border-radius: $radius-md;
+  border: 1px solid $color-border;
+  background: $color-surface;
+  color: $color-text-main;
+  cursor: pointer;
+  font-size: 1.3rem;
+
+  &:hover:not(:disabled) {
+    background: $color-bg-soft;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.active {
+  background: $color-primary;
+  border-color: $color-primary;
+  color: #fff;
+}
+
+.ellipsis {
+  color: $color-text-muted;
+  padding: 0 $space-1;
+}

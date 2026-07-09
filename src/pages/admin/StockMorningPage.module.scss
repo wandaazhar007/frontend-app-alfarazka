@@ -1,0 +1,31 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the StockMorningPage in a frontend application. It includes styles for the date input and quantity input, ensuring a consistent and visually appealing design. The StockMorningPage is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience. 
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.dateInput {
+  height: 4rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 0 $space-3;
+  @include focus-ring;
+}
+
+.qtyInput {
+  width: 100%;
+  height: 3.6rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 0 $space-2;
+  @include tabular-nums;
+  @include focus-ring;
+}
+
+.submitRow {
+  margin-top: $space-4;
+}

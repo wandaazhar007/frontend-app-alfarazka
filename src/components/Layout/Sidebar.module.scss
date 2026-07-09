@@ -1,0 +1,108 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the Sidebar component in a frontend application. It includes styles for the sidebar container and its child elements, ensuring a consistent and visually appealing design. The sidebar is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: $sidebar-width;
+  flex-shrink: 0;
+  background: $color-surface;
+  border-right: 1px solid $color-border;
+  height: 100vh;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-4;
+  height: $navbar-height;
+  border-bottom: 1px solid $color-border;
+}
+
+.brandLogo {
+  width: 3.2rem;
+  height: 3.2rem;
+  object-fit: contain;
+}
+
+.brandName {
+  font-family: $font-family-heading;
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: $color-text-main;
+}
+
+.nav {
+  padding: $space-4 $space-3;
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.groupLabel {
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $color-text-soft;
+  padding: 0 $space-3;
+  margin-bottom: $space-1;
+}
+
+.item {
+  @include focus-ring;
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-2 $space-3;
+  border-radius: $radius-md;
+  color: $color-text-muted;
+  text-decoration: none;
+  font-size: 1.4rem;
+  position: relative;
+
+  &:hover {
+    background: $color-bg-soft;
+    color: $color-text-main;
+  }
+}
+
+.itemIcon {
+  width: 1.8rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+// Aktif: teks primary + latar primary-soft + indikator bar kiri — bukan blok merah pekat (§6).
+.itemActive {
+  color: $color-primary;
+  background: $color-primary-soft;
+  font-weight: 600;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: -#{$space-3};
+    top: 0.4rem;
+    bottom: 0.4rem;
+    width: 3px;
+    background: $color-primary;
+    border-radius: $radius-pill;
+  }
+}

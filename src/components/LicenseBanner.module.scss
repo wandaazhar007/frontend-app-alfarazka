@@ -1,0 +1,22 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the LicenseBanner component in a frontend application. It includes styles for the banner container, ensuring a consistent and visually appealing design. The LicenseBanner component is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+
+.banner {
+  background: $color-accent-soft;
+  border-bottom: 1px solid $color-border;
+  padding: $space-3 $space-4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-3;
+  flex-wrap: wrap;
+  font-size: 1.3rem;
+  color: $color-text-main;
+  text-align: center;
+}

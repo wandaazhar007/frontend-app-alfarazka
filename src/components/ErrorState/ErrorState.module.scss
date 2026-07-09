@@ -1,0 +1,27 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the ErrorState component in a frontend application. It includes styles for the wrapper, icon, and text elements, ensuring a consistent and visually appealing design. The ErrorState component is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: $space-3;
+  padding: $space-8 $space-4;
+}
+
+.icon {
+  font-size: 2.8rem;
+  color: $color-danger;
+}
+
+.text {
+  font-size: 1.4rem;
+  color: $color-text-main;
+}

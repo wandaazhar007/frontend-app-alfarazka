@@ -1,0 +1,59 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the Skeleton component in a frontend application. It includes styles for the block, text, statCard, tableRow, and chart elements, ensuring a consistent and visually appealing design. The Skeleton component is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+@keyframes shimmer {
+  0% {
+    background-position: -40rem 0;
+  }
+
+  100% {
+    background-position: 40rem 0;
+  }
+}
+
+.block {
+  border-radius: $radius-md;
+  background: linear-gradient(90deg, $color-surface-muted 25%, $color-border 37%, $color-surface-muted 63%);
+  background-size: 40rem 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+.text {
+  height: 1.4rem;
+  width: 100%;
+
+  &:not(:last-child) {
+    margin-bottom: $space-2;
+  }
+}
+
+.statCard {
+  @include card;
+  height: 8.4rem;
+}
+
+.tableRow {
+  height: 4.4rem;
+  width: 100%;
+  border-radius: $radius-sm;
+
+  &:not(:last-child) {
+    margin-bottom: $space-2;
+  }
+}
+
+.chart {
+  @include card;
+  height: 28rem;
+}

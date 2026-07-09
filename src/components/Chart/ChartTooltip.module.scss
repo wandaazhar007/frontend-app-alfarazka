@@ -1,0 +1,27 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the ChartTooltip component in a frontend application. It includes styles for the tooltip container, label, and value, ensuring a consistent and visually appealing design. The tooltip is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+
+.tooltip {
+  background: $color-surface;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+  padding: $space-2 $space-3;
+  font-size: 1.3rem;
+}
+
+.label {
+  color: $color-text-muted;
+  font-size: 1.2rem;
+  margin-bottom: $space-1;
+}
+
+.value {
+  font-weight: 700;
+  color: $color-primary;
+}

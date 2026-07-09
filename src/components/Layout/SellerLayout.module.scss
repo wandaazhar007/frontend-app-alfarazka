@@ -1,0 +1,25 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the SellerLayout component in a frontend application. It includes styles for the main shell and content areas, ensuring a consistent and visually appealing design. The layout is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: $color-bg;
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  max-width: $layout-max-width;
+  margin: 0 auto;
+  padding: $space-4;
+  // Ruang buat bottom nav supaya konten paling bawah tidak ketutup.
+  padding-bottom: calc(#{$bottom-nav-height} + #{$space-4});
+}

@@ -1,0 +1,112 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the Modal component in a frontend application. It includes styles for the modal overlay and panel, ensuring a consistent and visually appealing design. The modal is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $space-4;
+  z-index: 1100;
+  animation: fadeIn 150ms ease-out;
+
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+.panel {
+  background: $color-surface;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-card;
+  max-width: 48rem;
+  width: 100%;
+  max-height: calc(100vh - #{$space-8});
+  overflow-y: auto;
+  padding: $space-6;
+  animation: scaleIn 150ms ease-out;
+
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $space-3;
+  margin-bottom: $space-4;
+}
+
+.title {
+  font-family: $font-family-heading;
+  font-size: 1.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}
+
+// Modal "perlu tindakan" (mis. lisensi expired) — bukan error fatal, jadi aksen warning bukan merah.
+.iconWarning {
+  color: $color-warning;
+}
+
+.closeButton {
+  @include focus-ring;
+  background: none;
+  border: none;
+  color: $color-text-muted;
+  cursor: pointer;
+  width: 3.6rem;
+  height: 3.6rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-sm;
+  line-height: 1;
+
+  &:hover {
+    background: $color-bg-soft;
+  }
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: $space-3;
+  margin-top: $space-6;
+}

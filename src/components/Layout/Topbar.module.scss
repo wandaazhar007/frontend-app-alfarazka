@@ -1,0 +1,113 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the Topbar component in a frontend application. It includes styles for the topbar container, left and right sections, menu button, title block, date, user name, and logout button, ensuring a consistent and visually appealing design. The Topbar component is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.topbar {
+  height: $navbar-height;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: 0 $space-4;
+  background: $color-surface;
+  border-bottom: 1px solid $color-border;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  @include respond('desktop') {
+    padding: 0 $space-6;
+  }
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  min-width: 0;
+}
+
+.menuButton {
+  @include focus-ring;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border: none;
+  background: none;
+  color: $color-text-main;
+  cursor: pointer;
+  border-radius: $radius-md;
+  flex-shrink: 0;
+
+  &:hover {
+    background: $color-bg-soft;
+  }
+
+  @include respond('desktop') {
+    display: none;
+  }
+}
+
+.titleBlock {
+  min-width: 0;
+}
+
+.title {
+  font-size: 1.8rem;
+  @include truncate;
+}
+
+.date {
+  font-size: 1.2rem;
+  color: $color-text-muted;
+  display: none;
+
+  @include respond('tablet') {
+    display: block;
+  }
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  flex-shrink: 0;
+}
+
+.userName {
+  font-size: 1.3rem;
+  font-weight: 600;
+  display: none;
+
+  @include respond('tablet') {
+    display: block;
+  }
+}
+
+.logoutButton {
+  @include focus-ring;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border: none;
+  background: none;
+  color: $color-text-muted;
+  cursor: pointer;
+  border-radius: $radius-md;
+
+  &:hover {
+    background: $color-bg-soft;
+    color: $color-danger;
+  }
+}
