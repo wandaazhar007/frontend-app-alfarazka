@@ -25,3 +25,14 @@ Description: This SCSS file defines the styles for the StockEveningPage in a fro
   @include tabular-nums;
   @include focus-ring;
 }
+
+.grandTotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: $space-4;
+  padding: $space-3 $space-4;
+  @include card;
+  font-weight: 700;
+  @include tabular-nums;
+}

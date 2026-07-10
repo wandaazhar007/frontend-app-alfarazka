@@ -46,6 +46,10 @@ Description: This SCSS file defines the styles for the Modal component in a fron
   }
 }
 
+.overlayBlur {
+  backdrop-filter: blur(4px);
+}
+
 .panel {
   background: $color-surface;
   border-radius: $radius-xl;

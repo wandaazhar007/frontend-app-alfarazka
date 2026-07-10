@@ -7,6 +7,8 @@ export interface SellerReportRow {
   qtyOut: number;
   qtyReturned: number;
   qtySold: number;
+  isFullyReturned: boolean;
+  isSettled: boolean;
 }
 
 export interface KelilingSummary {

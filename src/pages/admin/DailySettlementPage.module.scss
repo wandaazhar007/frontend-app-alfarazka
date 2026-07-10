@@ -25,7 +25,3 @@ Description: This SCSS file defines the styles for the DailySettlementPage in a 
   @include tabular-nums;
   @include focus-ring;
 }
-
-.submitRow {
-  margin-top: $space-4;
-}

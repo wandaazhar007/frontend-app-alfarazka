@@ -1,44 +1,39 @@
 import { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHandHoldingDollar, faXmark, faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
-import type { DailyReport } from '../../types/dailyReport';
+import type { DailyReport, SellerReportRow } from '../../types/dailyReport';
+import { formatRupiah } from '../../utils/format';
 import todayJakarta from '../../utils/todayJakarta';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import Button from '../../components/Button/Button';
+import Badge from '../../components/Badge/Badge';
+import FormField from '../../components/FormField/FormField';
 import Table, { type TableColumn } from '../../components/Table/Table';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import ErrorState from '../../components/ErrorState/ErrorState';
 import { SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
+import Modal from '../../components/Modal/Modal';
 import styles from './DailySettlementPage.module.scss';
-
-interface RowInput {
-  sellerId: string;
-  sellerName: string;
-  cash: number;
-  qris: number;
-}
 
 export default function DailySettlementPage() {
   const { showToast } = useToast();
   const [date, setDate] = useState(todayJakarta());
-  const [rows, setRows] = useState<RowInput[]>([]);
+  const [sellers, setSellers] = useState<SellerReportRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [settleTarget, setSettleTarget] = useState<SellerReportRow | null>(null);
+  const [cashInput, setCashInput] = useState(0);
+  const [qrisInput, setQrisInput] = useState(0);
+  const [saving, setSaving] = useState(false);
 
   const loadExisting = async () => {
     setLoading(true);
     setError(false);
     try {
       const { data } = await api.get<DailyReport>('/api/reports/daily', { params: { date } });
-      setRows(
-        data.keliling.sellers.map((s) => ({
-          sellerId: s.sellerId,
-          sellerName: s.sellerName,
-          cash: s.cash,
-          qris: s.qris,
-        }))
-      );
+      setSellers(data.keliling.sellers.filter((s) => s.qtyOut > 0));
     } catch {
       setError(true);
     } finally {
@@ -51,69 +46,74 @@ export default function DailySettlementPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date]);
 
-  const updateRow = (sellerId: string, field: 'cash' | 'qris', value: number) => {
-    setRows((prev) => prev.map((r) => (r.sellerId === sellerId ? { ...r, [field]: value } : r)));
+  const openSettleModal = (row: SellerReportRow) => {
+    setSettleTarget(row);
+    setCashInput(row.cash);
+    setQrisInput(row.qris);
   };
 
-  const handleSubmit = async () => {
-    setSubmitting(true);
+  const closeSettleModal = () => {
+    setSettleTarget(null);
+    setCashInput(0);
+    setQrisInput(0);
+  };
+
+  const handleSaveSettle = async () => {
+    if (!settleTarget) return;
+    setSaving(true);
 
     try {
-      const salesToSubmit = rows.filter((r) => r.cash > 0);
-      const qrisItems = rows.filter((r) => r.qris > 0).map((r) => ({ sellerId: r.sellerId, amount: r.qris }));
-
-      await Promise.all(
-        salesToSubmit.map((r) =>
-          api.post('/api/sales', {
-            saleType: 'keliling',
-            sellerId: r.sellerId,
-            saleDate: date,
-            payments: [{ method: 'cash', amount: r.cash }],
-          })
-        )
-      );
-
-      if (qrisItems.length > 0) {
-        await api.post('/api/qris-settlements', { settlementDate: date, items: qrisItems });
-      }
-
+      await Promise.all([
+        api.post('/api/sales', {
+          saleType: 'keliling',
+          sellerId: settleTarget.sellerId,
+          saleDate: date,
+          payments: [{ method: 'cash', amount: cashInput }],
+        }),
+        api.post('/api/qris-settlements', {
+          settlementDate: date,
+          items: [{ sellerId: settleTarget.sellerId, amount: qrisInput }],
+        }),
+      ]);
       showToast('success', 'Setoran & QRIS berhasil disimpan.');
+      closeSettleModal();
       await loadExisting();
     } catch {
       showToast('danger', 'Gagal menyimpan setoran/QRIS.');
     } finally {
-      setSubmitting(false);
+      setSaving(false);
     }
   };
 
-  const columns: TableColumn<RowInput>[] = [
-    { key: 'seller', header: 'Penjual', render: (r) => r.sellerName },
+  const columns: TableColumn<SellerReportRow>[] = [
+    { key: 'seller', header: 'Nama Penjual', render: (r) => r.sellerName },
+    { key: 'qtyOut', header: 'Total Qty', align: 'right', render: (r) => String(r.qtyOut) },
+    { key: 'qtyReturned', header: 'Total Retur', align: 'right', render: (r) => String(r.qtyReturned) },
+    { key: 'qtySold', header: 'Total Terjual', align: 'right', render: (r) => String(r.qtySold) },
+    { key: 'cash', header: 'Cash', align: 'right', render: (r) => formatRupiah(r.cash) },
+    { key: 'qris', header: 'Qris', align: 'right', render: (r) => formatRupiah(r.qris) },
     {
-      key: 'cash',
-      header: 'Setoran Cash',
-      align: 'right',
-      render: (r) => (
-        <input
-          type="number"
-          min={0}
-          className={styles.amountInput}
-          value={r.cash}
-          onChange={(e) => updateRow(r.sellerId, 'cash', Number(e.target.value))}
-        />
-      ),
+      key: 'status',
+      header: 'Status',
+      render: (r) =>
+        !r.isFullyReturned ? (
+          <Badge tone="danger">Belum Retur</Badge>
+        ) : (
+          <Badge tone={r.isSettled ? 'success' : 'danger'}>{r.isSettled ? 'Sudah Setoran' : 'Belum Setoran'}</Badge>
+        ),
     },
     {
-      key: 'qris',
-      header: 'Settlement QRIS',
-      align: 'right',
+      key: 'action',
+      header: '',
       render: (r) => (
-        <input
-          type="number"
-          min={0}
-          className={styles.amountInput}
-          value={r.qris}
-          onChange={(e) => updateRow(r.sellerId, 'qris', Number(e.target.value))}
-        />
+        <Button
+          size="sm"
+          onClick={() => openSettleModal(r)}
+          disabled={!r.isFullyReturned}
+          icon={<FontAwesomeIcon icon={faHandHoldingDollar} />}
+        >
+          {!r.isFullyReturned ? 'Belum Retur' : r.isSettled ? 'Edit Setoran' : 'Setor'}
+        </Button>
       ),
     },
   ];
@@ -129,17 +129,53 @@ export default function DailySettlementPage() {
         <SkeletonTable rows={5} />
       ) : error ? (
         <ErrorState onRetry={loadExisting} />
-      ) : rows.length === 0 ? (
-        <EmptyState message="Belum ada penjual aktif." />
+      ) : sellers.length === 0 ? (
+        <EmptyState message="Belum ada penjual yang berjualan pada tanggal ini." />
       ) : (
-        <>
-          <Table columns={columns} data={rows} rowKey={(r) => r.sellerId} />
-          <div className={styles.submitRow}>
-            <Button variant="primary" onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Menyimpan...' : 'Simpan Setoran & QRIS'}
-            </Button>
-          </div>
-        </>
+        <Table columns={columns} data={sellers} rowKey={(r) => r.sellerId} />
+      )}
+
+      {settleTarget && (
+        <Modal
+          title={`Setor — ${settleTarget.sellerName}`}
+          onClose={closeSettleModal}
+          footer={
+            <>
+              <Button variant="secondary" onClick={closeSettleModal} disabled={saving} icon={<FontAwesomeIcon icon={faXmark} />}>
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSaveSettle}
+                disabled={saving}
+                icon={<FontAwesomeIcon icon={faFloppyDisk} />}
+              >
+                {saving ? 'Menyimpan...' : 'Simpan'}
+              </Button>
+            </>
+          }
+        >
+          <FormField label="Setoran Cash" htmlFor="settle-cash">
+            <input
+              id="settle-cash"
+              type="number"
+              min={0}
+              className={styles.amountInput}
+              value={cashInput}
+              onChange={(e) => setCashInput(Number(e.target.value))}
+            />
+          </FormField>
+          <FormField label="Settlement QRIS" htmlFor="settle-qris">
+            <input
+              id="settle-qris"
+              type="number"
+              min={0}
+              className={styles.amountInput}
+              value={qrisInput}
+              onChange={(e) => setQrisInput(Number(e.target.value))}
+            />
+          </FormField>
+        </Modal>
       )}
     </div>
   );

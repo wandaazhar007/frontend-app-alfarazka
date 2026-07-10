@@ -1,0 +1,41 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the Combobox component in a frontend application. It includes styles for the search input and the filtered dropdown list, ensuring a consistent and visually appealing design that matches the rest of the form inputs.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.wrapper {
+  position: relative;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + #{$space-1});
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 24rem;
+  overflow-y: auto;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+}
+
+.option {
+  padding: $space-2 $space-3;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-bg-soft;
+  }
+}
+
+.empty {
+  padding: $space-2 $space-3;
+  color: $color-text-muted;
+}
