@@ -21,6 +21,26 @@ Description: This SCSS file defines the styles for the TokoSalePage in a fronten
   }
 }
 
+.priceDisplay {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.priceLabel {
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: $color-text-main;
+}
+
+.priceValue {
+  height: 4.4rem;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  @include tabular-nums;
+}
+
 .totalRow {
   display: flex;
   align-items: center;
@@ -44,8 +64,3 @@ Description: This SCSS file defines the styles for the TokoSalePage in a fronten
   }
 }
 
-.paymentField {
-  display: flex;
-  align-items: center;
-  gap: $space-2;
-}
