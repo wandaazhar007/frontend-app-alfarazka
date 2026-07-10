@@ -61,6 +61,11 @@ Description: This SCSS file defines the styles for the StockMorningPage in a fro
   gap: $space-2;
 }
 
+.doneIcon {
+  color: $color-success;
+  font-size: 2rem;
+}
+
 .pickerList {
   display: flex;
   flex-direction: column;

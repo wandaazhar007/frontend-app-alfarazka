@@ -8,6 +8,7 @@ import {
   faTrashCan,
   faUserPlus,
   faCheck,
+  faCircleCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import type { Seller } from '../../types/seller';
@@ -221,6 +222,8 @@ export default function StockMorningPage() {
 
   const totalQty = (row: SellerRow) => Object.values(row.byProduct).reduce((sum, m) => sum + m.qtyOut, 0);
 
+  const isFullyReturned = (row: SellerRow) => Object.values(row.byProduct).every((m) => m.returnedAt !== null);
+
   const columns: TableColumn<SellerRow>[] = [
     { key: 'seller', header: 'Penjual', render: (r) => r.sellerName },
     {
@@ -235,23 +238,33 @@ export default function StockMorningPage() {
     },
     { key: 'total', header: 'Total Qty', align: 'right', render: (r) => String(totalQty(r)) },
     {
+      key: 'status',
+      header: 'Status',
+      render: (r) => (
+        <Badge tone={isFullyReturned(r) ? 'success' : 'danger'}>{isFullyReturned(r) ? 'Sudah Retur' : 'Belum Retur'}</Badge>
+      ),
+    },
+    {
       key: 'action',
       header: '',
-      render: (r) => (
-        <div className={styles.rowActions}>
-          <Button size="sm" onClick={() => startEdit(r)} icon={<FontAwesomeIcon icon={faPenToSquare} />}>
-            Edit
-          </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={() => setDeleteTarget({ sellerId: r.sellerId, sellerName: r.sellerName })}
-            icon={<FontAwesomeIcon icon={faTrashCan} />}
-          >
-            Hapus
-          </Button>
-        </div>
-      ),
+      render: (r) =>
+        isFullyReturned(r) ? (
+          <FontAwesomeIcon icon={faCircleCheck} className={styles.doneIcon} title="Sudah retur" />
+        ) : (
+          <div className={styles.rowActions}>
+            <Button size="sm" onClick={() => startEdit(r)} icon={<FontAwesomeIcon icon={faPenToSquare} />}>
+              Edit
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => setDeleteTarget({ sellerId: r.sellerId, sellerName: r.sellerName })}
+              icon={<FontAwesomeIcon icon={faTrashCan} />}
+            >
+              Hapus
+            </Button>
+          </div>
+        ),
     },
   ];
 
