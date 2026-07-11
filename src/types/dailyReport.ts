@@ -9,6 +9,7 @@ export interface SellerReportRow {
   qtySold: number;
   isFullyReturned: boolean;
   isSettled: boolean;
+  needsResettlement: boolean;
 }
 
 export interface KelilingSummary {
@@ -18,6 +19,15 @@ export interface KelilingSummary {
   totalQtyOut: number;
   totalQtyReturned: number;
   totalQtySold: number;
+}
+
+// Response dari GET /api/reports/keliling-status — versi ringan dari DailyReport,
+// cuma breakdown keliling, dipakai halaman yang cuma butuh status retur+setoran
+// per penjual (StockMorningPage/StockEveningPage/DailySettlementPage) supaya
+// tidak ikut menanggung query toko+paket yang tidak mereka pakai.
+export interface KelilingStatusResponse {
+  sellers: SellerReportRow[];
+  summary: KelilingSummary;
 }
 
 export interface TokoSaleItemRow {

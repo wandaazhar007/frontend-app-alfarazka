@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRotateLeft, faXmark, faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
+import { faRotateLeft, faXmark, faFloppyDisk, faCircleCheck, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import type { StockMovement } from '../../types/stockMovement';
+import type { KelilingStatusResponse } from '../../types/dailyReport';
 import todayJakarta from '../../utils/todayJakarta';
+import { formatTanggal } from '../../utils/format';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import Button from '../../components/Button/Button';
 import Badge from '../../components/Badge/Badge';
@@ -23,20 +26,27 @@ interface SellerRow {
 
 export default function StockEveningPage() {
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [date, setDate] = useState(todayJakarta());
   const [movements, setMovements] = useState<StockMovement[]>([]);
+  const [settlementMap, setSettlementMap] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [returnTarget, setReturnTarget] = useState<string | null>(null);
   const [returnQtyMap, setReturnQtyMap] = useState<Record<string, number>>({});
   const [saving, setSaving] = useState(false);
+  const [showResettlementWarning, setShowResettlementWarning] = useState(false);
 
   const loadMovements = async () => {
     setLoading(true);
     setError(false);
     try {
-      const { data } = await api.get<StockMovement[]>('/api/stock-movements', { params: { date } });
-      setMovements(data);
+      const [movementsRes, reportRes] = await Promise.all([
+        api.get<StockMovement[]>('/api/stock-movements', { params: { date } }),
+        api.get<KelilingStatusResponse>('/api/reports/keliling-status', { params: { date } }),
+      ]);
+      setMovements(movementsRes.data);
+      setSettlementMap(Object.fromEntries(reportRes.data.sellers.map((s) => [s.sellerId, s.isSettled])));
     } catch {
       setError(true);
     } finally {
@@ -65,6 +75,7 @@ export default function StockEveningPage() {
   const totalQtyOut = (row: SellerRow) => Object.values(row.byProduct).reduce((sum, m) => sum + m.qtyOut, 0);
   const totalQtyReturned = (row: SellerRow) => Object.values(row.byProduct).reduce((sum, m) => sum + m.qtyReturned, 0);
   const isFullyReturned = (row: SellerRow) => Object.values(row.byProduct).every((m) => m.returnedAt !== null);
+  const isSettled = (row: SellerRow) => settlementMap[row.sellerId] ?? false;
 
   const returnRow = tableRows.find((r) => r.sellerId === returnTarget) ?? null;
 
@@ -88,10 +99,19 @@ export default function StockEveningPage() {
     }));
 
     try {
-      await api.put('/api/stock-movements/return-batch', { items });
-      showToast('success', 'Retur stok berhasil disimpan.');
+      const { data } = await api.put<StockMovement[]>('/api/stock-movements/return-batch', {
+        sellerId: returnRow.sellerId,
+        movementDate: date,
+        items,
+      });
       closeReturnModal();
       await loadMovements();
+
+      if (data.some((m) => m.needsResettlement)) {
+        setShowResettlementWarning(true);
+      } else {
+        showToast('success', 'Retur stok berhasil disimpan.');
+      }
     } catch {
       showToast('danger', 'Gagal menyimpan retur.');
     } finally {
@@ -114,25 +134,46 @@ export default function StockEveningPage() {
     { key: 'qtyOut', header: 'Qty Keluar', align: 'right', render: (r) => String(totalQtyOut(r)) },
     { key: 'qtyReturned', header: 'Qty Retur', align: 'right', render: (r) => String(totalQtyReturned(r)) },
     {
-      key: 'status',
-      header: 'Status',
+      key: 'retur',
+      header: 'Retur',
       render: (r) => (
         <Badge tone={isFullyReturned(r) ? 'success' : 'danger'}>{isFullyReturned(r) ? 'Sudah Retur' : 'Belum Retur'}</Badge>
       ),
     },
     {
+      key: 'setoran',
+      header: 'Setoran',
+      render: (r) => (
+        <Badge tone={isSettled(r) ? 'success' : 'danger'}>{isSettled(r) ? 'Sudah Setoran' : 'Belum Setoran'}</Badge>
+      ),
+    },
+    {
       key: 'action',
       header: '',
-      render: (r) => (
-        <Button size="sm" onClick={() => openReturnModal(r)} icon={<FontAwesomeIcon icon={faRotateLeft} />}>
-          {isFullyReturned(r) ? 'Edit Retur' : 'Retur'}
-        </Button>
-      ),
+      render: (r) =>
+        isFullyReturned(r) && isSettled(r) ? (
+          <div className={styles.rowActions}>
+            <button
+              type="button"
+              className={styles.doneButton}
+              onClick={() => openReturnModal(r)}
+              title="Sudah retur & setoran — klik untuk edit ulang retur"
+            >
+              <FontAwesomeIcon icon={faCircleCheck} />
+            </button>
+            <Badge tone="success">Selesai</Badge>
+          </div>
+        ) : (
+          <Button size="sm" onClick={() => openReturnModal(r)} icon={<FontAwesomeIcon icon={faRotateLeft} />}>
+            {isFullyReturned(r) ? 'Edit Retur' : 'Retur'}
+          </Button>
+        ),
     },
   ];
 
   return (
     <div>
+      <h1 className={styles.dateHeading}>{formatTanggal(date, 'panjang')}</h1>
       <PageHeader
         description="Catat retur roti sore ini dari tiap penjual — roti terjual otomatis dihitung dari selisihnya."
         actions={<input type="date" className={styles.dateInput} value={date} onChange={(e) => setDate(e.target.value)} />}
@@ -204,6 +245,30 @@ export default function StockEveningPage() {
             data={Object.values(returnRow.byProduct)}
             rowKey={(m) => m.id}
           />
+        </Modal>
+      )}
+
+      {showResettlementWarning && (
+        <Modal
+          title="Perhatian"
+          icon={<FontAwesomeIcon icon={faTriangleExclamation} className={styles.warningIcon} />}
+          onClose={() => setShowResettlementWarning(false)}
+          footer={
+            <Button
+              variant="primary"
+              onClick={() => {
+                setShowResettlementWarning(false);
+                navigate('/admin/daily-settlement');
+              }}
+            >
+              OK
+            </Button>
+          }
+        >
+          <p>
+            Nilai retur untuk penjual ini sudah diubah, padahal setoran &amp; QRIS-nya sudah pernah diinput. Mohon buka
+            halaman Setoran &amp; QRIS dan perbarui nilai setorannya supaya tidak ada selisih.
+          </p>
         </Modal>
       )}
     </div>

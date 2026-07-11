@@ -8,6 +8,19 @@ Description: This SCSS file defines the styles for the StockMorningPage in a fro
 @use '@/styles/variables' as *;
 @use '@/styles/mixins' as *;
 
+.dateHeading {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(22, 163, 74, 0.12);
+  color: $color-success;
+  font-family: $font-family-heading;
+  font-size: 2rem;
+  font-weight: 700;
+  padding: $space-2 $space-4;
+  border-radius: $radius-pill;
+  margin: 0 0 $space-4;
+}
+
 .dateInput {
   height: 4rem;
   border: 1px solid $color-border;

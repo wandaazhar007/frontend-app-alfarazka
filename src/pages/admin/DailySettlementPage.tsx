@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHandHoldingDollar, faXmark, faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
-import type { DailyReport, SellerReportRow } from '../../types/dailyReport';
-import { formatRupiah } from '../../utils/format';
+import type { KelilingStatusResponse, SellerReportRow } from '../../types/dailyReport';
+import { formatRupiah, formatTanggal } from '../../utils/format';
 import todayJakarta from '../../utils/todayJakarta';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import Button from '../../components/Button/Button';
@@ -32,8 +32,8 @@ export default function DailySettlementPage() {
     setLoading(true);
     setError(false);
     try {
-      const { data } = await api.get<DailyReport>('/api/reports/daily', { params: { date } });
-      setSellers(data.keliling.sellers.filter((s) => s.qtyOut > 0));
+      const { data } = await api.get<KelilingStatusResponse>('/api/reports/keliling-status', { params: { date } });
+      setSellers(data.sellers.filter((s) => s.qtyOut > 0));
     } catch {
       setError(true);
     } finally {
@@ -86,21 +86,34 @@ export default function DailySettlementPage() {
   };
 
   const columns: TableColumn<SellerReportRow>[] = [
-    { key: 'seller', header: 'Nama Penjual', render: (r) => r.sellerName },
+    {
+      key: 'seller',
+      header: 'Nama Penjual',
+      render: (r) => (
+        <div>
+          <div>{r.sellerName}</div>
+          {r.needsResettlement && <div className={styles.resettlementNote}>Ada perubahan nilai retur</div>}
+        </div>
+      ),
+    },
     { key: 'qtyOut', header: 'Total Qty', align: 'right', render: (r) => String(r.qtyOut) },
     { key: 'qtyReturned', header: 'Total Retur', align: 'right', render: (r) => String(r.qtyReturned) },
     { key: 'qtySold', header: 'Total Terjual', align: 'right', render: (r) => String(r.qtySold) },
     { key: 'cash', header: 'Cash', align: 'right', render: (r) => formatRupiah(r.cash) },
     { key: 'qris', header: 'Qris', align: 'right', render: (r) => formatRupiah(r.qris) },
     {
-      key: 'status',
-      header: 'Status',
-      render: (r) =>
-        !r.isFullyReturned ? (
-          <Badge tone="danger">Belum Retur</Badge>
-        ) : (
-          <Badge tone={r.isSettled ? 'success' : 'danger'}>{r.isSettled ? 'Sudah Setoran' : 'Belum Setoran'}</Badge>
-        ),
+      key: 'retur',
+      header: 'Retur',
+      render: (r) => (
+        <Badge tone={r.isFullyReturned ? 'success' : 'danger'}>{r.isFullyReturned ? 'Sudah Retur' : 'Belum Retur'}</Badge>
+      ),
+    },
+    {
+      key: 'setoran',
+      header: 'Setoran',
+      render: (r) => (
+        <Badge tone={r.isSettled ? 'success' : 'danger'}>{r.isSettled ? 'Sudah Setoran' : 'Belum Setoran'}</Badge>
+      ),
     },
     {
       key: 'action',
@@ -112,7 +125,7 @@ export default function DailySettlementPage() {
           disabled={!r.isFullyReturned}
           icon={<FontAwesomeIcon icon={faHandHoldingDollar} />}
         >
-          {!r.isFullyReturned ? 'Belum Retur' : r.isSettled ? 'Edit Setoran' : 'Setor'}
+          {!r.isFullyReturned ? 'Belum Retur' : r.isSettled ? 'Edit Setoran' : 'Setoran'}
         </Button>
       ),
     },
@@ -120,6 +133,7 @@ export default function DailySettlementPage() {
 
   return (
     <div>
+      <h1 className={styles.dateHeading}>{formatTanggal(date, 'panjang')}</h1>
       <PageHeader
         description="Input setoran cash dan settlement QRIS harian tiap penjual keliling."
         actions={<input type="date" className={styles.dateInput} value={date} onChange={(e) => setDate(e.target.value)} />}
@@ -132,7 +146,12 @@ export default function DailySettlementPage() {
       ) : sellers.length === 0 ? (
         <EmptyState message="Belum ada penjual yang berjualan pada tanggal ini." />
       ) : (
-        <Table columns={columns} data={sellers} rowKey={(r) => r.sellerId} />
+        <Table
+          columns={columns}
+          data={sellers}
+          rowKey={(r) => r.sellerId}
+          rowClassName={(r) => (r.needsResettlement ? styles.resettlementRow : undefined)}
+        />
       )}
 
       {settleTarget && (

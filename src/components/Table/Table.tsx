@@ -14,13 +14,15 @@ interface TableProps<T> {
   columns: TableColumn<T>[];
   data: T[];
   rowKey: (row: T) => string;
+  /** Extra class per row (e.g. highlight a row that needs attention) — applied to both the desktop <tr> and the mobile card. */
+  rowClassName?: (row: T) => string | undefined;
 }
 
 // Desktop/tablet (>= $breakpoints.tablet): regular table.
 // Mobile: stacked cards, one card per row — NO horizontal scroll (§8.12).
 // Empty/loading/error states are handled by the caller (EmptyState/Skeleton/ErrorState), not here.
 
-export default function Table<T>({ columns, data, rowKey }: TableProps<T>) {
+export default function Table<T>({ columns, data, rowKey, rowClassName }: TableProps<T>) {
   return (
     <>
       <div className={styles.tableWrapper}>
@@ -36,7 +38,7 @@ export default function Table<T>({ columns, data, rowKey }: TableProps<T>) {
           </thead>
           <tbody>
             {data.map((row) => (
-              <tr key={rowKey(row)}>
+              <tr key={rowKey(row)} className={rowClassName?.(row)}>
                 {columns.map((col) => (
                   <td key={col.key} className={col.align === 'right' ? styles.alignRight : undefined}>
                     {col.render(row)}
@@ -50,7 +52,7 @@ export default function Table<T>({ columns, data, rowKey }: TableProps<T>) {
 
       <div className={styles.cardList}>
         {data.map((row) => (
-          <div className={styles.rowCard} key={rowKey(row)}>
+          <div className={[styles.rowCard, rowClassName?.(row)].filter(Boolean).join(' ')} key={rowKey(row)}>
             {columns
               .filter((col) => !col.hideOnCard)
               .map((col) => (

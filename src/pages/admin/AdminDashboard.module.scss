@@ -23,6 +23,17 @@ Description: This SCSS file defines the styles for the AdminDashboard page in a 
   }
 }
 
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  margin-bottom: $space-3;
+
+  .sectionTitle {
+    margin-bottom: 0;
+  }
+}
+
 .sectionTitle {
   font-size: 1.6rem;
   margin-bottom: $space-3;

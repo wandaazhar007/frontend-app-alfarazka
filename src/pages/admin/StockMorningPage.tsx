@@ -14,7 +14,9 @@ import api from '../../services/api';
 import type { Seller } from '../../types/seller';
 import type { Product } from '../../types/product';
 import type { StockMovement } from '../../types/stockMovement';
+import type { KelilingStatusResponse } from '../../types/dailyReport';
 import todayJakarta from '../../utils/todayJakarta';
+import { formatTanggal } from '../../utils/format';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import Button from '../../components/Button/Button';
 import Badge from '../../components/Badge/Badge';
@@ -47,6 +49,7 @@ export default function StockMorningPage() {
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [movements, setMovements] = useState<StockMovement[]>([]);
+  const [settlementMap, setSettlementMap] = useState<Record<string, boolean>>({});
   const [loadingMeta, setLoadingMeta] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -80,8 +83,12 @@ export default function StockMorningPage() {
     setLoading(true);
     setError(false);
     try {
-      const { data } = await api.get<StockMovement[]>('/api/stock-movements', { params: { date } });
-      setMovements(data);
+      const [movementsRes, reportRes] = await Promise.all([
+        api.get<StockMovement[]>('/api/stock-movements', { params: { date } }),
+        api.get<KelilingStatusResponse>('/api/reports/keliling-status', { params: { date } }),
+      ]);
+      setMovements(movementsRes.data);
+      setSettlementMap(Object.fromEntries(reportRes.data.sellers.map((s) => [s.sellerId, s.isSettled])));
     } catch {
       setError(true);
     } finally {
@@ -224,6 +231,8 @@ export default function StockMorningPage() {
 
   const isFullyReturned = (row: SellerRow) => Object.values(row.byProduct).every((m) => m.returnedAt !== null);
 
+  const isSettled = (row: SellerRow) => settlementMap[row.sellerId] ?? false;
+
   const columns: TableColumn<SellerRow>[] = [
     { key: 'seller', header: 'Penjual', render: (r) => r.sellerName },
     {
@@ -238,38 +247,64 @@ export default function StockMorningPage() {
     },
     { key: 'total', header: 'Total Qty', align: 'right', render: (r) => String(totalQty(r)) },
     {
-      key: 'status',
-      header: 'Status',
+      key: 'retur',
+      header: 'Retur',
       render: (r) => (
         <Badge tone={isFullyReturned(r) ? 'success' : 'danger'}>{isFullyReturned(r) ? 'Sudah Retur' : 'Belum Retur'}</Badge>
       ),
     },
     {
+      key: 'setoran',
+      header: 'Setoran',
+      render: (r) => (
+        <Badge tone={isSettled(r) ? 'success' : 'danger'}>{isSettled(r) ? 'Sudah Setoran' : 'Belum Setoran'}</Badge>
+      ),
+    },
+    {
       key: 'action',
       header: '',
-      render: (r) =>
-        isFullyReturned(r) ? (
-          <FontAwesomeIcon icon={faCircleCheck} className={styles.doneIcon} title="Sudah retur" />
-        ) : (
+      render: (r) => {
+        if (isFullyReturned(r) && isSettled(r)) {
+          return (
+            <div className={styles.rowActions}>
+              <FontAwesomeIcon icon={faCircleCheck} className={styles.doneIcon} title="Retur & setoran selesai" />
+              <Badge tone="success">Selesai</Badge>
+            </div>
+          );
+        }
+
+        const locked = isFullyReturned(r) && !isSettled(r);
+
+        return (
           <div className={styles.rowActions}>
-            <Button size="sm" onClick={() => startEdit(r)} icon={<FontAwesomeIcon icon={faPenToSquare} />}>
+            <Button
+              size="sm"
+              onClick={() => startEdit(r)}
+              disabled={locked}
+              title={locked ? 'Sudah retur — tidak bisa diedit sampai setoran diinput' : undefined}
+              icon={<FontAwesomeIcon icon={faPenToSquare} />}
+            >
               Edit
             </Button>
             <Button
               size="sm"
               variant="danger"
               onClick={() => setDeleteTarget({ sellerId: r.sellerId, sellerName: r.sellerName })}
+              disabled={locked}
+              title={locked ? 'Sudah retur — tidak bisa dihapus sampai setoran diinput' : undefined}
               icon={<FontAwesomeIcon icon={faTrashCan} />}
             >
               Hapus
             </Button>
           </div>
-        ),
+        );
+      },
     },
   ];
 
   return (
     <div>
+      <h1 className={styles.dateHeading}>{formatTanggal(date, 'panjang')}</h1>
       <PageHeader
         description="Catat jumlah roti yang dibawa tiap penjual keliling pagi ini."
         actions={

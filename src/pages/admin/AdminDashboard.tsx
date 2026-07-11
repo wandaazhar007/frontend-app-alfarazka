@@ -5,9 +5,10 @@ import { faBoxOpen, faQrcode, faWallet, faBookOpen } from '@fortawesome/free-sol
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
 import todayJakarta from '../../utils/todayJakarta';
-import { formatRupiah } from '../../utils/format';
+import { formatRupiah, formatTanggal } from '../../utils/format';
 import StatCard from '../../components/StatCard/StatCard';
 import PageHeader from '../../components/PageHeader/PageHeader';
+import Badge from '../../components/Badge/Badge';
 import { SkeletonStatCardRow } from '../../components/Skeleton/Skeleton';
 import ErrorState from '../../components/ErrorState/ErrorState';
 import type { DailyReport } from '../../types/dailyReport';
@@ -29,12 +30,21 @@ export default function AdminDashboard() {
   const load = useCallback(async () => {
     setLoading(true);
     setError(false);
+    const start = Date.now();
     try {
       const { data } = await api.get<DailyReport>('/api/reports/daily', { params: { date: todayJakarta() } });
       setReport(data);
     } catch {
       setError(true);
     } finally {
+      // Request-nya sering selesai < 500ms (apalagi kalau browser cache 304), jadi
+      // skeleton-nya cuma kedip sekilas dan hampir tidak sempat terlihat. Beri durasi
+      // tampil minimum supaya konsisten kelihatan tanpa nambah delay berarti utk yang lambat.
+      const MIN_VISIBLE_MS = 500;
+      const elapsed = Date.now() - start;
+      if (elapsed < MIN_VISIBLE_MS) {
+        await new Promise((resolve) => setTimeout(resolve, MIN_VISIBLE_MS - elapsed));
+      }
       setLoading(false);
     }
   }, []);
@@ -47,7 +57,10 @@ export default function AdminDashboard() {
     <div>
       <PageHeader description={`Selamat datang, ${appUser?.name}. Ringkasan hari ini dan akses cepat tugas harian.`} />
 
-      <h2 className={styles.sectionTitle}>Ringkasan Hari Ini</h2>
+      <div className={styles.sectionHeading}>
+        <h1 className={styles.sectionTitle}>Ringkasan Hari Ini</h1>
+        <Badge tone="success">{formatTanggal(todayJakarta(), 'panjang')}</Badge>
+      </div>
       {loading ? (
         <SkeletonStatCardRow count={3} />
       ) : error || !report ? (

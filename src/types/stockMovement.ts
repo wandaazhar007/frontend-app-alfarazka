@@ -10,5 +10,6 @@ export interface StockMovement {
   qtyReturned: number;
   qtySold: number;
   returnedAt: string | null;
+  needsResettlement: boolean;
   createdAt: string;
 }
