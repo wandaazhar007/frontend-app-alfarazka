@@ -70,3 +70,16 @@ Description: This SCSS file defines the styles for the StockEveningPage in a fro
 .warningIcon {
   color: $color-warning;
 }
+
+.modalDateBadge {
+  margin-bottom: $space-2;
+}
+
+.modalWarningBadge {
+  margin-bottom: $space-3;
+}
+
+.soldValue {
+  color: $color-success;
+  font-weight: 600;
+}

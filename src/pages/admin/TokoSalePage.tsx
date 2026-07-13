@@ -154,6 +154,7 @@ export default function TokoSalePage() {
                 value={selectedProductId}
                 onChange={handleSelectProduct}
                 placeholder="Cari produk..."
+                emptyMessage="Nama produk tidak ditemukan."
               />
             </FormField>
             <FormField label="Qty" htmlFor="toko-qty">

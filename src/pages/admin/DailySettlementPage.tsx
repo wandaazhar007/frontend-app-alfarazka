@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHandHoldingDollar, faXmark, faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
+import { faHandHoldingDollar, faXmark, faFloppyDisk, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import type { KelilingStatusResponse, SellerReportRow } from '../../types/dailyReport';
 import { formatRupiah, formatTanggal } from '../../utils/format';
@@ -17,6 +17,17 @@ import { useToast } from '../../components/Toast/ToastProvider';
 import Modal from '../../components/Modal/Modal';
 import styles from './DailySettlementPage.module.scss';
 
+// Format apa adanya sambil diketik (mis. 100000 -> "100.000"), tanpa simbol "Rp"
+// karena ini dipakai di dalam field yang bisa diedit, bukan tampilan read-only.
+function formatInputRupiah(value: number | ''): string {
+  return value === '' ? '' : new Intl.NumberFormat('id-ID').format(value);
+}
+
+function parseRupiahInput(raw: string): number | '' {
+  const digitsOnly = raw.replace(/\D/g, '');
+  return digitsOnly === '' ? '' : Number(digitsOnly);
+}
+
 export default function DailySettlementPage() {
   const { showToast } = useToast();
   const [date, setDate] = useState(todayJakarta());
@@ -24,9 +35,11 @@ export default function DailySettlementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [settleTarget, setSettleTarget] = useState<SellerReportRow | null>(null);
-  const [cashInput, setCashInput] = useState(0);
-  const [qrisInput, setQrisInput] = useState(0);
+  const [cashInput, setCashInput] = useState<number | ''>('');
+  const [qrisInput, setQrisInput] = useState<number | ''>('');
   const [saving, setSaving] = useState(false);
+  const [showFieldError, setShowFieldError] = useState(false);
+  const [pendingConfirmMissing, setPendingConfirmMissing] = useState<'cash' | 'qris' | null>(null);
 
   const loadExisting = async () => {
     setLoading(true);
@@ -48,17 +61,21 @@ export default function DailySettlementPage() {
 
   const openSettleModal = (row: SellerReportRow) => {
     setSettleTarget(row);
-    setCashInput(row.cash);
-    setQrisInput(row.qris);
+    setCashInput(row.cash > 0 ? row.cash : '');
+    setQrisInput(row.qris > 0 ? row.qris : '');
+    setShowFieldError(false);
+    setPendingConfirmMissing(null);
   };
 
   const closeSettleModal = () => {
     setSettleTarget(null);
-    setCashInput(0);
-    setQrisInput(0);
+    setCashInput('');
+    setQrisInput('');
+    setShowFieldError(false);
+    setPendingConfirmMissing(null);
   };
 
-  const handleSaveSettle = async () => {
+  const doSaveSettle = async () => {
     if (!settleTarget) return;
     setSaving(true);
 
@@ -68,11 +85,11 @@ export default function DailySettlementPage() {
           saleType: 'keliling',
           sellerId: settleTarget.sellerId,
           saleDate: date,
-          payments: [{ method: 'cash', amount: cashInput }],
+          payments: [{ method: 'cash', amount: cashInput || 0 }],
         }),
         api.post('/api/qris-settlements', {
           settlementDate: date,
-          items: [{ sellerId: settleTarget.sellerId, amount: qrisInput }],
+          items: [{ sellerId: settleTarget.sellerId, amount: qrisInput || 0 }],
         }),
       ]);
       showToast('success', 'Setoran & QRIS berhasil disimpan.');
@@ -83,6 +100,30 @@ export default function DailySettlementPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveSettle = () => {
+    if (!settleTarget) return;
+
+    const isCashFilled = typeof cashInput === 'number' && cashInput > 0;
+    const isQrisFilled = typeof qrisInput === 'number' && qrisInput > 0;
+
+    if (!isCashFilled && !isQrisFilled) {
+      setShowFieldError(true);
+      return;
+    }
+
+    if (isCashFilled && !isQrisFilled) {
+      setPendingConfirmMissing('qris');
+      return;
+    }
+
+    if (!isCashFilled && isQrisFilled) {
+      setPendingConfirmMissing('cash');
+      return;
+    }
+
+    doSaveSettle();
   };
 
   const columns: TableColumn<SellerReportRow>[] = [
@@ -174,26 +215,72 @@ export default function DailySettlementPage() {
             </>
           }
         >
-          <FormField label="Setoran Cash" htmlFor="settle-cash">
+          <FormField
+            label="Setoran Cash"
+            htmlFor="settle-cash"
+            error={showFieldError ? 'Salah satu field wajib diisi' : undefined}
+          >
             <input
               id="settle-cash"
-              type="number"
-              min={0}
+              type="text"
+              inputMode="numeric"
+              placeholder="Rp. 0"
               className={styles.amountInput}
-              value={cashInput}
-              onChange={(e) => setCashInput(Number(e.target.value))}
+              value={formatInputRupiah(cashInput)}
+              onChange={(e) => {
+                setShowFieldError(false);
+                setCashInput(parseRupiahInput(e.target.value));
+              }}
             />
           </FormField>
-          <FormField label="Settlement QRIS" htmlFor="settle-qris">
+          <FormField
+            label="Settlement QRIS"
+            htmlFor="settle-qris"
+            error={showFieldError ? 'Salah satu field wajib diisi' : undefined}
+          >
             <input
               id="settle-qris"
-              type="number"
-              min={0}
+              type="text"
+              inputMode="numeric"
+              placeholder="Rp. 0"
               className={styles.amountInput}
-              value={qrisInput}
-              onChange={(e) => setQrisInput(Number(e.target.value))}
+              value={formatInputRupiah(qrisInput)}
+              onChange={(e) => {
+                setShowFieldError(false);
+                setQrisInput(parseRupiahInput(e.target.value));
+              }}
             />
           </FormField>
+        </Modal>
+      )}
+
+      {pendingConfirmMissing && settleTarget && (
+        <Modal
+          title="Perhatian"
+          icon={<FontAwesomeIcon icon={faTriangleExclamation} className={styles.warningIcon} />}
+          onClose={() => setPendingConfirmMissing(null)}
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setPendingConfirmMissing(null)} disabled={saving}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setPendingConfirmMissing(null);
+                  doSaveSettle();
+                }}
+                disabled={saving}
+              >
+                Yakin & Simpan
+              </Button>
+            </>
+          }
+        >
+          <p>
+            Apakah Anda yakin {settleTarget.sellerName} tidak memiliki setoran{' '}
+            {pendingConfirmMissing === 'cash' ? 'cash' : 'QRIS'}?
+          </p>
         </Modal>
       )}
     </div>

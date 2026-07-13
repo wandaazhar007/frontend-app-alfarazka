@@ -43,9 +43,29 @@ interface CartItem {
   qtyOut: number;
 }
 
+interface PersistedForm {
+  date: string;
+  formSellerId: string | null;
+  cart: CartItem[];
+  originalProductIds: string[];
+  selectedProductId: string;
+  cartQty: number | '';
+}
+
+const FORM_STORAGE_KEY = 'stock-morning-form';
+
+function loadStoredForm(): PersistedForm | null {
+  try {
+    const raw = localStorage.getItem(FORM_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as PersistedForm) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function StockMorningPage() {
   const { showToast } = useToast();
-  const [date, setDate] = useState(todayJakarta());
+  const [date, setDate] = useState(() => loadStoredForm()?.date ?? todayJakarta());
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [movements, setMovements] = useState<StockMovement[]>([]);
@@ -54,14 +74,19 @@ export default function StockMorningPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
-  const [formSellerId, setFormSellerId] = useState<string | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [originalProductIds, setOriginalProductIds] = useState<string[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState('');
-  const [cartQty, setCartQty] = useState(1);
+  const [formSellerId, setFormSellerId] = useState<string | null>(() => loadStoredForm()?.formSellerId ?? null);
+  const [cart, setCart] = useState<CartItem[]>(() => loadStoredForm()?.cart ?? []);
+  const [originalProductIds, setOriginalProductIds] = useState<string[]>(() => loadStoredForm()?.originalProductIds ?? []);
+  const [selectedProductId, setSelectedProductId] = useState(() => loadStoredForm()?.selectedProductId ?? '');
+  const [cartQty, setCartQty] = useState<number | ''>(() => loadStoredForm()?.cartQty ?? '');
   const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ sellerId: string; sellerName: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const payload: PersistedForm = { date, formSellerId, cart, originalProductIds, selectedProductId, cartQty };
+    localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(payload));
+  }, [date, formSellerId, cart, originalProductIds, selectedProductId, cartQty]);
 
   const loadMeta = async () => {
     setLoadingMeta(true);
@@ -141,7 +166,7 @@ export default function StockMorningPage() {
     setCart([]);
     setOriginalProductIds([]);
     setSelectedProductId('');
-    setCartQty(1);
+    setCartQty('');
     setShowPicker(false);
   };
 
@@ -155,7 +180,7 @@ export default function StockMorningPage() {
     setCart(items);
     setOriginalProductIds(items.map((i) => i.productId));
     setSelectedProductId('');
-    setCartQty(1);
+    setCartQty('');
   };
 
   const cancelForm = () => {
@@ -163,15 +188,15 @@ export default function StockMorningPage() {
     setCart([]);
     setOriginalProductIds([]);
     setSelectedProductId('');
-    setCartQty(1);
+    setCartQty('');
   };
 
   const addToCart = () => {
     const product = products.find((p) => p.id === selectedProductId);
-    if (!product || cartQty <= 0) return;
+    if (!product || !cartQty || cartQty <= 0) return;
     setCart((prev) => [...prev, { productId: product.id, productName: product.name, qtyOut: cartQty }]);
     setSelectedProductId('');
-    setCartQty(1);
+    setCartQty('');
   };
 
   const removeFromCart = (productId: string) => {
@@ -328,6 +353,7 @@ export default function StockMorningPage() {
               value={selectedProductId}
               onChange={setSelectedProductId}
               placeholder="Cari produk..."
+              emptyMessage="Nama produk tidak ditemukan."
             />
           </FormField>
           <FormField label="Qty" htmlFor="cart-qty">
@@ -335,9 +361,10 @@ export default function StockMorningPage() {
               id="cart-qty"
               type="number"
               min={1}
+              placeholder="0"
               className={styles.qtyInput}
               value={cartQty}
-              onChange={(e) => setCartQty(Number(e.target.value))}
+              onChange={(e) => setCartQty(e.target.value === '' ? '' : Number(e.target.value))}
             />
           </FormField>
           <Button

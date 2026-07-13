@@ -12,9 +12,17 @@ interface ComboboxProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  emptyMessage?: string;
 }
 
-export default function Combobox({ id, options, value, onChange, placeholder }: ComboboxProps) {
+export default function Combobox({
+  id,
+  options,
+  value,
+  onChange,
+  placeholder,
+  emptyMessage = 'Tidak ada data ditemukan.',
+}: ComboboxProps) {
   const selectedLabel = options.find((o) => o.value === value)?.label ?? '';
   const [query, setQuery] = useState(selectedLabel);
   const [isOpen, setIsOpen] = useState(false);
@@ -67,7 +75,7 @@ export default function Combobox({ id, options, value, onChange, placeholder }: 
       {isOpen && (
         <div className={styles.dropdown}>
           {filteredOptions.length === 0 ? (
-            <div className={styles.empty}>Tidak ada produk ditemukan.</div>
+            <div className={styles.empty}>{emptyMessage}</div>
           ) : (
             filteredOptions.map((option) => (
               <div key={option.value} className={styles.option} onMouseDown={() => selectOption(option)}>

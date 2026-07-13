@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRotateLeft, faXmark, faFloppyDisk, faCircleCheck, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import {
+  faRotateLeft,
+  faXmark,
+  faFloppyDisk,
+  faCircleCheck,
+  faTriangleExclamation,
+  faCheck,
+} from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import type { StockMovement } from '../../types/stockMovement';
 import type { KelilingStatusResponse } from '../../types/dailyReport';
@@ -33,7 +40,7 @@ export default function StockEveningPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [returnTarget, setReturnTarget] = useState<string | null>(null);
-  const [returnQtyMap, setReturnQtyMap] = useState<Record<string, number>>({});
+  const [returnQtyMap, setReturnQtyMap] = useState<Record<string, number | ''>>({});
   const [saving, setSaving] = useState(false);
   const [showResettlementWarning, setShowResettlementWarning] = useState(false);
 
@@ -79,9 +86,18 @@ export default function StockEveningPage() {
 
   const returnRow = tableRows.find((r) => r.sellerId === returnTarget) ?? null;
 
+  const hasExceededQty = returnRow
+    ? Object.values(returnRow.byProduct).some((m) => {
+        const val = returnQtyMap[m.productId];
+        return typeof val === 'number' && val > m.qtyOut;
+      })
+    : false;
+
   const openReturnModal = (row: SellerRow) => {
     setReturnTarget(row.sellerId);
-    setReturnQtyMap(Object.fromEntries(Object.values(row.byProduct).map((m) => [m.productId, m.qtyReturned])));
+    setReturnQtyMap(
+      Object.fromEntries(Object.values(row.byProduct).map((m) => [m.productId, m.returnedAt !== null ? m.qtyReturned : '']))
+    );
   };
 
   const closeReturnModal = () => {
@@ -91,11 +107,15 @@ export default function StockEveningPage() {
 
   const handleSaveReturn = async () => {
     if (!returnRow) return;
+    if (hasExceededQty) {
+      showToast('danger', 'Ada qty retur yang melebihi qty keluar. Perbaiki dulu sebelum menyimpan.');
+      return;
+    }
     setSaving(true);
 
     const items = Object.values(returnRow.byProduct).map((m) => ({
       id: m.id,
-      qtyReturned: returnQtyMap[m.productId] ?? 0,
+      qtyReturned: returnQtyMap[m.productId] || 0,
     }));
 
     try {
@@ -208,7 +228,7 @@ export default function StockEveningPage() {
               <Button
                 variant="primary"
                 onClick={handleSaveReturn}
-                disabled={saving}
+                disabled={saving || hasExceededQty}
                 icon={<FontAwesomeIcon icon={faFloppyDisk} />}
               >
                 {saving ? 'Menyimpan...' : 'Simpan'}
@@ -216,6 +236,14 @@ export default function StockEveningPage() {
             </>
           }
         >
+          <div className={styles.modalDateBadge}>
+            <Badge tone="danger">{formatTanggal(date, 'panjang')}</Badge>
+          </div>
+          {hasExceededQty && (
+            <div className={styles.modalWarningBadge}>
+              <Badge tone="danger">Qty Retur tidak boleh melebihi Qty Keluar</Badge>
+            </div>
+          )}
           <Table
             columns={[
               { key: 'product', header: 'Produk', render: (m) => m.productName },
@@ -229,9 +257,18 @@ export default function StockEveningPage() {
                     type="number"
                     min={0}
                     max={m.qtyOut}
+                    placeholder="0"
                     className={styles.qtyInput}
-                    value={returnQtyMap[m.productId] ?? 0}
-                    onChange={(e) => setReturnQtyMap((prev) => ({ ...prev, [m.productId]: Number(e.target.value) }))}
+                    value={returnQtyMap[m.productId] ?? ''}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === '') {
+                        setReturnQtyMap((prev) => ({ ...prev, [m.productId]: '' }));
+                        return;
+                      }
+                      const parsed = Math.max(0, Number(raw));
+                      setReturnQtyMap((prev) => ({ ...prev, [m.productId]: parsed }));
+                    }}
                   />
                 ),
               },
@@ -239,7 +276,11 @@ export default function StockEveningPage() {
                 key: 'sold',
                 header: 'Terjual',
                 align: 'right',
-                render: (m) => String(m.qtyOut - (returnQtyMap[m.productId] ?? 0)),
+                render: (m) => (
+                  <span className={styles.soldValue}>
+                    {m.qtyOut - (returnQtyMap[m.productId] || 0)} <FontAwesomeIcon icon={faCheck} />
+                  </span>
+                ),
               },
             ]}
             data={Object.values(returnRow.byProduct)}

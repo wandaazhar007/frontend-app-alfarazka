@@ -5,6 +5,7 @@ Contact: wandaazhar@gmail.com
 Description: This SCSS file defines the styles for the ReceivablesPage in a frontend application. It includes styles for the filter row, filter select, payment form, and amount input, ensuring a consistent and visually appealing design. The ReceivablesPage is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience. 
 */
 
+@use 'sass:color';
 @use '@/styles/variables' as *;
 @use '@/styles/mixins' as *;
 
@@ -27,12 +28,72 @@ Description: This SCSS file defines the styles for the ReceivablesPage in a fron
   align-items: center;
 }
 
+.amountField {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
 .amountInput {
-  width: 10rem;
+  width: 13rem;
   height: 3.6rem;
   border: 1px solid $color-border;
   border-radius: $radius-sm;
   padding: 0 $space-2;
   @include tabular-nums;
   @include focus-ring;
+}
+
+.amountInputError {
+  border-color: $color-danger;
+}
+
+.fieldErrorText {
+  font-size: 1.2rem;
+  color: $color-danger;
+}
+
+.methodSelect {
+  height: 3.6rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 0 $space-2;
+  @include focus-ring;
+}
+
+// Tetap ada di DOM utk screen reader (tombol Simpan/Batal jadi icon-only secara visual).
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.overdueRow {
+  $overdue-bg: color.adjust($color-danger, $lightness: 34%);
+
+  background: $overdue-bg;
+  // color: #fff;
+
+  // Table.module.scss punya aturan `.table tbody tr:hover` yang lebih spesifik
+  // (lebih banyak selector elemen) — perlu !important supaya baris overdue tidak
+  // "kembali abu-abu" (bikin teks putihnya jadi tidak terbaca) saat di-hover.
+  &:hover {
+    background: $overdue-bg !important;
+  }
+}
+
+.paidRow {
+  $paid-bg: color.adjust($color-success, $lightness: 44%);
+
+  background: $paid-bg;
+
+  &:hover {
+    background: $paid-bg !important;
+  }
 }

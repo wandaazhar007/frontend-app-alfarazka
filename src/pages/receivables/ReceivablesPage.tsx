@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFloppyDisk, faXmark } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import todayJakarta from '../../utils/todayJakarta';
@@ -17,6 +19,24 @@ import { SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
 import styles from './ReceivablesPage.module.scss';
 
+// dueDate/todayJakarta selalu format ISO "YYYY-MM-DD" — cukup susun ulang stringnya,
+// tidak perlu parse ke Date (menghindari pergeseran tanggal akibat timezone).
+function formatDueDateDash(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-');
+  return `${d}-${m}-${y}`;
+}
+
+// Beda dari field rupiah di halaman lain — di sini "Rp." ikut tampil sambil diketik,
+// bukan cuma di placeholder (mis. 100000 -> "Rp. 100.000").
+function formatInputRupiah(value: number | ''): string {
+  return value === '' ? '' : `Rp. ${new Intl.NumberFormat('id-ID').format(value)}`;
+}
+
+function parseRupiahInput(raw: string): number | '' {
+  const digitsOnly = raw.replace(/\D/g, '');
+  return digitsOnly === '' ? '' : Number(digitsOnly);
+}
+
 export default function ReceivablesPage() {
   const { appUser } = useAuth();
   const { showToast } = useToast();
@@ -27,7 +47,7 @@ export default function ReceivablesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [payingId, setPayingId] = useState<string | null>(null);
-  const [payAmount, setPayAmount] = useState(0);
+  const [payAmount, setPayAmount] = useState<number | ''>('');
   const [payMethod, setPayMethod] = useState<'cash' | 'qris'>('cash');
   const [submitting, setSubmitting] = useState(false);
 
@@ -56,22 +76,27 @@ export default function ReceivablesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, page]);
 
+  const isOverdue = (r: Receivable) => r.status !== 'lunas' && r.dueDate !== null && r.dueDate < todayJakarta();
+
+  const payingRow = receivables.find((r) => r.id === payingId) ?? null;
+  const payExceedsOutstanding = payingRow !== null && typeof payAmount === 'number' && payAmount > payingRow.outstanding;
+
   const startPayment = (r: Receivable) => {
     setPayingId(r.id);
-    setPayAmount(r.outstanding);
+    setPayAmount('');
     setPayMethod('cash');
   };
 
   const cancelPayment = () => {
     setPayingId(null);
-    setPayAmount(0);
+    setPayAmount('');
   };
 
   const submitPayment = async (id: string) => {
     setSubmitting(true);
     try {
       await api.post(`/api/receivables/${id}/payments`, {
-        amount: payAmount,
+        amount: payAmount || 0,
         method: payMethod,
         paymentDate: todayJakarta(),
       });
@@ -91,7 +116,7 @@ export default function ReceivablesPage() {
     { key: 'total', header: 'Total', align: 'right', render: (r) => formatRupiah(r.totalAmount) },
     { key: 'paid', header: 'Terbayar', align: 'right', render: (r) => formatRupiah(r.amountPaid) },
     { key: 'outstanding', header: 'Sisa', align: 'right', render: (r) => formatRupiah(r.outstanding) },
-    { key: 'dueDate', header: 'Jatuh Tempo', render: (r) => r.dueDate ?? '-' },
+    { key: 'dueDate', header: 'Jatuh Tempo', render: (r) => (r.dueDate ? formatDueDateDash(r.dueDate) : '-') },
     {
       key: 'status',
       header: 'Status',
@@ -106,23 +131,39 @@ export default function ReceivablesPage() {
       render: (r) =>
         r.status === 'lunas' ? null : payingId === r.id ? (
           <div className={styles.paymentForm}>
-            <input
-              type="number"
-              className={styles.amountInput}
-              value={payAmount}
-              min={1}
-              max={r.outstanding}
-              onChange={(e) => setPayAmount(Number(e.target.value))}
-            />
-            <select value={payMethod} onChange={(e) => setPayMethod(e.target.value as 'cash' | 'qris')}>
+            <div className={styles.amountField}>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Rp. 0"
+                className={[styles.amountInput, payExceedsOutstanding ? styles.amountInputError : ''].filter(Boolean).join(' ')}
+                value={formatInputRupiah(payAmount)}
+                onChange={(e) => setPayAmount(parseRupiahInput(e.target.value))}
+              />
+              {payExceedsOutstanding && (
+                <span className={styles.fieldErrorText}>Nominal melebihi sisa piutang ({formatRupiah(r.outstanding)})</span>
+              )}
+            </div>
+            <select
+              className={styles.methodSelect}
+              value={payMethod}
+              onChange={(e) => setPayMethod(e.target.value as 'cash' | 'qris')}
+            >
               <option value="cash">Cash</option>
               <option value="qris">QRIS</option>
             </select>
-            <Button size="sm" variant="primary" onClick={() => submitPayment(r.id)} disabled={submitting}>
-              Simpan
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => submitPayment(r.id)}
+              disabled={submitting || payExceedsOutstanding || !payAmount}
+              title="Simpan"
+              icon={<FontAwesomeIcon icon={faFloppyDisk} />}
+            >
+              <span className={styles.srOnly}>Simpan</span>
             </Button>
-            <Button size="sm" variant="secondary" onClick={cancelPayment}>
-              Batal
+            <Button size="sm" variant="secondary" onClick={cancelPayment} title="Batal" icon={<FontAwesomeIcon icon={faXmark} />}>
+              <span className={styles.srOnly}>Batal</span>
             </Button>
           </div>
         ) : (
@@ -155,7 +196,12 @@ export default function ReceivablesPage() {
       ) : receivables.length === 0 ? (
         <EmptyState message="Tidak ada piutang untuk filter ini." />
       ) : (
-        <Table columns={columns} data={receivables} rowKey={(r) => r.id} />
+        <Table
+          columns={columns}
+          data={receivables}
+          rowKey={(r) => r.id}
+          rowClassName={(r) => (isOverdue(r) ? styles.overdueRow : r.status === 'lunas' ? styles.paidRow : undefined)}
+        />
       )}
       <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
     </div>
