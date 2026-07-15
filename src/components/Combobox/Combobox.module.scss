@@ -10,6 +10,13 @@ Description: This SCSS file defines the styles for the Combobox component in a f
 
 .wrapper {
   position: relative;
+
+  // Inputs don't stretch to fill a block-level parent by default (they're
+  // replaced elements with an intrinsic width, ~20 characters) — without this,
+  // the box stays narrow no matter how wide the surrounding grid/flex column is.
+  input {
+    width: 100%;
+  }
 }
 
 .dropdown {

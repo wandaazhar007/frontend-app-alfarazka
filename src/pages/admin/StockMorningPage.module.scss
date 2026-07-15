@@ -102,6 +102,10 @@ Description: This SCSS file defines the styles for the StockMorningPage in a fro
   color: $color-text-muted;
 }
 
+.warningIcon {
+  color: $color-warning;
+}
+
 .grandTotal {
   display: flex;
   align-items: center;

@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import todayJakarta from '../../utils/todayJakarta';
 import { formatRupiah } from '../../utils/format';
@@ -11,6 +13,7 @@ import Combobox from '../../components/Combobox/Combobox';
 import ErrorState from '../../components/ErrorState/ErrorState';
 import { SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
+import LoadingOverlay from '../../components/LoadingOverlay/LoadingOverlay';
 import styles from './PaketSalePage.module.scss';
 
 interface PaketSaleResponse {
@@ -114,7 +117,7 @@ export default function PaketSalePage() {
   };
 
   return (
-    <div>
+    <div className={styles.page}>
       <PageHeader description="Catat penjualan paket custom (mis. paket aqiqah) — bisa DP sebagian, sisanya jadi piutang." />
       <p className={styles.hint}>
         Belum ada pelanggan yang cocok? <Link to="/admin/customers">Tambah pelanggan baru</Link>.
@@ -125,98 +128,107 @@ export default function PaketSalePage() {
       ) : error ? (
         <ErrorState onRetry={load} />
       ) : (
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <FormField
-            label="Pelanggan"
-            htmlFor="paket-customer"
-            error={fieldErrors.customerId ? 'Pelanggan wajib dipilih' : undefined}
-          >
-            <Combobox
-              id="paket-customer"
-              options={customers.map((c) => ({ value: c.id, label: c.name }))}
-              value={customerId}
-              onChange={(value) => {
-                setFieldErrors((prev) => ({ ...prev, customerId: false }));
-                setCustomerId(value);
-              }}
-              placeholder="Cari pelanggan..."
-              emptyMessage="Nama pelanggan tidak ditemukan."
-            />
-          </FormField>
-          <FormField
-            label="Nama Paket"
-            htmlFor="paket-name"
-            error={fieldErrors.customName ? 'Nama paket wajib diisi' : undefined}
-          >
-            <input
-              id="paket-name"
-              placeholder="mis. Paket Aqiqah Bu Ani"
-              value={customName}
-              onChange={(e) => {
-                setFieldErrors((prev) => ({ ...prev, customName: false }));
-                setCustomName(e.target.value);
-              }}
-            />
-          </FormField>
-          <FormField label="Tanggal" htmlFor="paket-date">
-            <input id="paket-date" type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} required />
-          </FormField>
-          <FormField
-            label="Total Harga (Negosiasi)"
-            htmlFor="paket-total"
-            error={fieldErrors.totalAmount ? 'Total harga wajib diisi' : undefined}
-          >
-            <input
-              id="paket-total"
-              type="text"
-              inputMode="numeric"
-              placeholder="Rp. 0"
-              value={formatInputRupiah(totalAmount)}
-              onChange={(e) => {
-                setFieldErrors((prev) => ({ ...prev, totalAmount: false }));
-                setTotalAmount(parseRupiahInput(e.target.value));
-              }}
-            />
-          </FormField>
-          <FormField
-            label="DP Awal"
-            htmlFor="paket-dp"
-            help="Kosongkan kalau belum ada DP"
-            error={dpExceedsTotal ? 'DP Awal tidak boleh melebihi Total Harga' : undefined}
-          >
-            <input
-              id="paket-dp"
-              type="text"
-              inputMode="numeric"
-              placeholder="Rp. 0"
-              value={formatInputRupiah(dpAmount)}
-              onChange={(e) => setDpAmount(parseRupiahInput(e.target.value))}
-            />
-          </FormField>
-          {Boolean(dpAmount) && (
-            <FormField label="Metode DP" htmlFor="paket-dp-method">
-              <select id="paket-dp-method" value={dpMethod} onChange={(e) => setDpMethod(e.target.value as 'cash' | 'qris')}>
-                <option value="cash">Cash</option>
-                <option value="qris">QRIS</option>
-              </select>
+        <div className={styles.formArea}>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <FormField
+              label="Pelanggan"
+              htmlFor="paket-customer"
+              error={fieldErrors.customerId ? 'Pelanggan wajib dipilih' : undefined}
+            >
+              <Combobox
+                id="paket-customer"
+                options={customers.map((c) => ({ value: c.id, label: c.name }))}
+                value={customerId}
+                onChange={(value) => {
+                  setFieldErrors((prev) => ({ ...prev, customerId: false }));
+                  setCustomerId(value);
+                }}
+                placeholder="Cari pelanggan..."
+                emptyMessage="Nama pelanggan tidak ditemukan."
+              />
             </FormField>
-          )}
-          <FormField
-            label="Jatuh Tempo Pelunasan"
-            htmlFor="paket-due-date"
-            help="Opsional"
-            error={dueDateBeforeSaleDate ? 'Jatuh tempo tidak boleh lebih awal dari Tanggal' : undefined}
-          >
-            <input id="paket-due-date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-          </FormField>
+            <FormField
+              label="Nama Paket"
+              htmlFor="paket-name"
+              error={fieldErrors.customName ? 'Nama paket wajib diisi' : undefined}
+            >
+              <input
+                id="paket-name"
+                placeholder="mis. Paket Aqiqah Bu Ani"
+                value={customName}
+                onChange={(e) => {
+                  setFieldErrors((prev) => ({ ...prev, customName: false }));
+                  setCustomName(e.target.value);
+                }}
+              />
+            </FormField>
+            <FormField label="Tanggal" htmlFor="paket-date">
+              <input id="paket-date" type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} required />
+            </FormField>
+            <FormField
+              label="Total Harga (Negosiasi)"
+              htmlFor="paket-total"
+              error={fieldErrors.totalAmount ? 'Total harga wajib diisi' : undefined}
+            >
+              <input
+                id="paket-total"
+                type="text"
+                inputMode="numeric"
+                placeholder="Rp. 0"
+                value={formatInputRupiah(totalAmount)}
+                onChange={(e) => {
+                  setFieldErrors((prev) => ({ ...prev, totalAmount: false }));
+                  setTotalAmount(parseRupiahInput(e.target.value));
+                }}
+              />
+            </FormField>
+            <FormField
+              label="DP Awal"
+              htmlFor="paket-dp"
+              help="Kosongkan kalau belum ada DP"
+              error={dpExceedsTotal ? 'DP Awal tidak boleh melebihi Total Harga' : undefined}
+            >
+              <input
+                id="paket-dp"
+                type="text"
+                inputMode="numeric"
+                placeholder="Rp. 0"
+                value={formatInputRupiah(dpAmount)}
+                onChange={(e) => setDpAmount(parseRupiahInput(e.target.value))}
+              />
+            </FormField>
+            {Boolean(dpAmount) && (
+              <FormField label="Metode DP" htmlFor="paket-dp-method">
+                <select id="paket-dp-method" value={dpMethod} onChange={(e) => setDpMethod(e.target.value as 'cash' | 'qris')}>
+                  <option value="cash">Cash</option>
+                  <option value="qris">QRIS</option>
+                </select>
+              </FormField>
+            )}
+            <FormField
+              label="Jatuh Tempo Pelunasan"
+              htmlFor="paket-due-date"
+              help="Opsional"
+              error={dueDateBeforeSaleDate ? 'Jatuh tempo tidak boleh lebih awal dari Tanggal' : undefined}
+            >
+              <input id="paket-due-date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            </FormField>
 
-          <div className={styles.fullWidth}>
-            <Button type="submit" variant="primary" disabled={submitting || dpExceedsTotal || dueDateBeforeSaleDate}>
-              {submitting ? 'Menyimpan...' : 'Simpan Penjualan Paket'}
-            </Button>
-          </div>
-        </form>
+            <div className={styles.fullWidth}>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={submitting || dpExceedsTotal || dueDateBeforeSaleDate}
+                icon={<FontAwesomeIcon icon={faFloppyDisk} />}
+              >
+                {submitting ? 'Menyimpan...' : 'Simpan Penjualan Paket'}
+              </Button>
+            </div>
+          </form>
+        </div>
       )}
+
+      {submitting && <LoadingOverlay message="Menyimpan penjualan paket..." />}
     </div>
   );
 }

@@ -16,7 +16,7 @@ Description: This SCSS file defines the styles for the TokoSalePage in a fronten
   margin-bottom: $space-5;
 
   @include respond('tablet') {
-    grid-template-columns: 2fr 1fr 1fr auto;
+    grid-template-columns: 3fr 1fr 1fr auto;
     align-items: end;
   }
 }

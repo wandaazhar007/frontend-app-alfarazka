@@ -1,0 +1,26 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the ExpenseCategoriesPage in a frontend application. It includes styles for the add/edit modal form, ensuring a consistent and visually appealing design. The page is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.hint {
+  font-size: 1.3rem;
+  color: $color-text-muted;
+  margin-bottom: $space-4;
+}
+
+.rowActions {
+  display: flex;
+  gap: $space-2;
+}

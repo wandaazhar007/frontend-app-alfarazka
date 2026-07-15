@@ -12,7 +12,10 @@ Description: This SCSS file defines the styles for the Toast component in a fron
   position: fixed;
   top: $space-4;
   right: $space-4;
-  z-index: 1000;
+  // Harus selalu di atas Modal (1100) dan LoadingOverlay (1300) — toast adalah
+  // feedback transient yang tidak boleh ketutup elemen lain, termasuk saat modal
+  // masih terbuka (mis. submit gagal) atau LoadingOverlay masih tampil sesaat.
+  z-index: 1400;
   display: flex;
   flex-direction: column;
   gap: $space-2;

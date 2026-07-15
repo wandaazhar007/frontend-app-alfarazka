@@ -23,6 +23,7 @@ import ErrorState from '../../components/ErrorState/ErrorState';
 import { SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
 import Modal from '../../components/Modal/Modal';
+import LoadingOverlay from '../../components/LoadingOverlay/LoadingOverlay';
 import styles from './StockEveningPage.module.scss';
 
 interface SellerRow {
@@ -312,6 +313,8 @@ export default function StockEveningPage() {
           </p>
         </Modal>
       )}
+
+      {saving && <LoadingOverlay message="Menyimpan retur sore..." />}
     </div>
   );
 }

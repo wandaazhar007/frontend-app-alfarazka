@@ -4,7 +4,7 @@ import { faFloppyDisk, faXmark } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import todayJakarta from '../../utils/todayJakarta';
-import { formatRupiah } from '../../utils/format';
+import { formatRupiah, formatInputRupiah, parseRupiahInput } from '../../utils/format';
 import type { Receivable } from '../../types/receivable';
 import type { Paginated } from '../../types/pagination';
 import { PAGE_SIZE } from '../../utils/constants';
@@ -17,6 +17,7 @@ import EmptyState from '../../components/EmptyState/EmptyState';
 import ErrorState from '../../components/ErrorState/ErrorState';
 import { SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
+import LoadingOverlay from '../../components/LoadingOverlay/LoadingOverlay';
 import styles from './ReceivablesPage.module.scss';
 
 // dueDate/todayJakarta selalu format ISO "YYYY-MM-DD" — cukup susun ulang stringnya,
@@ -24,17 +25,6 @@ import styles from './ReceivablesPage.module.scss';
 function formatDueDateDash(dateStr: string): string {
   const [y, m, d] = dateStr.split('-');
   return `${d}-${m}-${y}`;
-}
-
-// Beda dari field rupiah di halaman lain — di sini "Rp." ikut tampil sambil diketik,
-// bukan cuma di placeholder (mis. 100000 -> "Rp. 100.000").
-function formatInputRupiah(value: number | ''): string {
-  return value === '' ? '' : `Rp. ${new Intl.NumberFormat('id-ID').format(value)}`;
-}
-
-function parseRupiahInput(raw: string): number | '' {
-  const digitsOnly = raw.replace(/\D/g, '');
-  return digitsOnly === '' ? '' : Number(digitsOnly);
 }
 
 export default function ReceivablesPage() {
@@ -204,6 +194,8 @@ export default function ReceivablesPage() {
         />
       )}
       <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
+
+      {submitting && <LoadingOverlay message="Menyimpan pembayaran piutang..." />}
     </div>
   );
 }

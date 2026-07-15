@@ -1,0 +1,63 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: Fullscreen blocking loading overlay for submit actions — see §8.10 exception in
+docs/07_DESIGN_SYSTEM.md. Not for page data loading (use Skeleton for that).
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $space-3;
+  z-index: 1300;
+  animation: fadeIn 150ms ease-out;
+
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+.spinner {
+  width: 4.8rem;
+  height: 4.8rem;
+  border: 0.4rem solid rgba(255, 255, 255, 0.25);
+  border-top-color: $color-primary;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+
+  @include reduced-motion {
+    animation: spin 1400ms linear infinite;
+  }
+}
+
+.message {
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 500;
+}

@@ -5,6 +5,8 @@ export interface Product {
   categoryId: string | null;
   categoryName: string | null;
   unitPrice: number;
+  costPrice: number;
+  hasUsage: boolean;
   isActive: boolean;
   createdAt: string;
 }
@@ -12,6 +14,7 @@ export interface Product {
 export interface ProductFormValues {
   name: string;
   categoryId: string;
-  unitPrice: number;
+  unitPrice: number | '';
+  costPrice: number | '';
   isActive: boolean;
 }

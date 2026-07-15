@@ -15,6 +15,7 @@ import ErrorState from '../../components/ErrorState/ErrorState';
 import { SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
 import Modal from '../../components/Modal/Modal';
+import LoadingOverlay from '../../components/LoadingOverlay/LoadingOverlay';
 import styles from './DailySettlementPage.module.scss';
 
 // Format apa adanya sambil diketik (mis. 100000 -> "100.000"), tanpa simbol "Rp"
@@ -199,6 +200,7 @@ export default function DailySettlementPage() {
         <Modal
           title={`Setor — ${settleTarget.sellerName}`}
           onClose={closeSettleModal}
+          blurBackdrop
           footer={
             <>
               <Button variant="secondary" onClick={closeSettleModal} disabled={saving} icon={<FontAwesomeIcon icon={faXmark} />}>
@@ -215,6 +217,9 @@ export default function DailySettlementPage() {
             </>
           }
         >
+          <div className={styles.modalDateBadge}>
+            <Badge tone="danger">{formatTanggal(date, 'panjang')}</Badge>
+          </div>
           <FormField
             label="Setoran Cash"
             htmlFor="settle-cash"
@@ -283,6 +288,8 @@ export default function DailySettlementPage() {
           </p>
         </Modal>
       )}
+
+      {saving && <LoadingOverlay message="Menyimpan setoran..." />}
     </div>
   );
 }

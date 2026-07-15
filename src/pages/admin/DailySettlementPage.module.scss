@@ -30,13 +30,17 @@ Description: This SCSS file defines the styles for the DailySettlementPage in a 
 }
 
 .amountInput {
-  width: 12rem;
+  width: 100%;
   height: 3.6rem;
   border: 1px solid $color-border;
   border-radius: $radius-sm;
   padding: 0 $space-2;
   @include tabular-nums;
   @include focus-ring;
+}
+
+.modalDateBadge {
+  margin-bottom: $space-2;
 }
 
 .resettlementRow {

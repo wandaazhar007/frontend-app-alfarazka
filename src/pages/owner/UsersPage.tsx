@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { faKey } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import type { Seller } from '../../types/seller';
 import type { AdminAccount, CreateUserFormValues } from '../../types/userAccount';
@@ -17,6 +18,7 @@ import ConfirmModal from '../../components/Modal/ConfirmModal';
 import TempPasswordBanner from '../../components/TempPasswordBanner/TempPasswordBanner';
 import { SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
+import LoadingOverlay from '../../components/LoadingOverlay/LoadingOverlay';
 import styles from './UsersPage.module.scss';
 
 interface ResetTarget {
@@ -274,11 +276,14 @@ export default function UsersPage() {
           title="Reset Password"
           message={`Yakin reset password ${resetTarget.name}? Password lama akan langsung tidak berlaku dan user wajib pakai password baru.`}
           confirmLabel="Ya, Reset"
+          confirmIcon={faKey}
           onConfirm={confirmReset}
           onCancel={() => setResetTarget(null)}
           submitting={resetting}
         />
       )}
+
+      {submitting && <LoadingOverlay message="Menyimpan user baru..." />}
     </div>
   );
 }

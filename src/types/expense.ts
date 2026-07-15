@@ -1,6 +1,11 @@
 export interface ExpenseCategory {
   id: number;
   name: string;
+  hasUsage: boolean;
+}
+
+export interface ExpenseCategoryFormValues {
+  name: string;
 }
 
 export interface Expense {

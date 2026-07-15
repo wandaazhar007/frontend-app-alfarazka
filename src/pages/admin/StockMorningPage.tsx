@@ -9,6 +9,7 @@ import {
   faUserPlus,
   faCheck,
   faCircleCheck,
+  faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import type { Seller } from '../../types/seller';
@@ -29,6 +30,7 @@ import FormField from '../../components/FormField/FormField';
 import Modal from '../../components/Modal/Modal';
 import ConfirmModal from '../../components/Modal/ConfirmModal';
 import Combobox from '../../components/Combobox/Combobox';
+import LoadingOverlay from '../../components/LoadingOverlay/LoadingOverlay';
 import styles from './StockMorningPage.module.scss';
 
 interface SellerRow {
@@ -74,6 +76,7 @@ export default function StockMorningPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const [showDateRestrictionModal, setShowDateRestrictionModal] = useState(false);
   const [formSellerId, setFormSellerId] = useState<string | null>(() => loadStoredForm()?.formSellerId ?? null);
   const [cart, setCart] = useState<CartItem[]>(() => loadStoredForm()?.cart ?? []);
   const [originalProductIds, setOriginalProductIds] = useState<string[]>(() => loadStoredForm()?.originalProductIds ?? []);
@@ -159,7 +162,13 @@ export default function StockMorningPage() {
     [products, cart]
   );
 
-  const openPicker = () => setShowPicker(true);
+  const openPicker = () => {
+    if (date !== todayJakarta()) {
+      setShowDateRestrictionModal(true);
+      return;
+    }
+    setShowPicker(true);
+  };
 
   const pickSeller = (sellerId: string) => {
     setFormSellerId(sellerId);
@@ -334,7 +343,18 @@ export default function StockMorningPage() {
         description="Catat jumlah roti yang dibawa tiap penjual keliling pagi ini."
         actions={
           <>
-            <input type="date" className={styles.dateInput} value={date} onChange={(e) => setDate(e.target.value)} />
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={date}
+              onChange={(e) => {
+                setDate(e.target.value);
+                // Form Stok Pagi yang sedang terbuka mengacu ke tanggal saat dibuka —
+                // kalau tanggal diganti sementara form masih terbuka, tutup/reset form
+                // supaya tidak tersimpan di tanggal yang salah (lihat celah yang dilaporkan).
+                if (formSellerId) cancelForm();
+              }}
+            />
             <Button variant="secondary" onClick={openPicker} icon={<FontAwesomeIcon icon={faUserPlus} />}>
               Penjual Hari Ini
             </Button>
@@ -371,7 +391,7 @@ export default function StockMorningPage() {
             type="button"
             variant="secondary"
             onClick={addToCart}
-            disabled={!selectedProductId}
+            disabled={!selectedProductId || cartQty === '' || cartQty <= 0}
             icon={<FontAwesomeIcon icon={faPlus} />}
           >
             Tambah
@@ -437,7 +457,7 @@ export default function StockMorningPage() {
       )}
 
       {showPicker && (
-        <Modal title="Pilih Penjual" onClose={() => setShowPicker(false)}>
+        <Modal title="Pilih Penjual" onClose={() => setShowPicker(false)} blurBackdrop>
           {availableSellers.length === 0 ? (
             <p className={styles.pickerEmpty}>Semua penjual aktif sudah ditambahkan untuk tanggal ini.</p>
           ) : (
@@ -460,6 +480,22 @@ export default function StockMorningPage() {
         </Modal>
       )}
 
+      {showDateRestrictionModal && (
+        <Modal
+          title="Perhatian"
+          icon={<FontAwesomeIcon icon={faTriangleExclamation} className={styles.warningIcon} />}
+          onClose={() => setShowDateRestrictionModal(false)}
+          blurBackdrop
+          footer={
+            <Button variant="primary" onClick={() => setShowDateRestrictionModal(false)}>
+              Mengerti
+            </Button>
+          }
+        >
+          <p>Penjual hari ini hanya bisa di-input pada hari ini. Silakan pilih tanggal hari ini terlebih dahulu.</p>
+        </Modal>
+      )}
+
       {deleteTarget && (
         <ConfirmModal
           title="Hapus Stok Pagi"
@@ -469,6 +505,8 @@ export default function StockMorningPage() {
           submitting={deleting}
         />
       )}
+
+      {submitting && <LoadingOverlay message="Menyimpan stok pagi..." />}
     </div>
   );
 }

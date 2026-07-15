@@ -2,36 +2,25 @@
 Author: Wanda Azhar
 Location: Michigan, USA
 Contact: wandaazhar@gmail.com
-Description: This SCSS file defines the styles for the SellersPage in a frontend application. It includes styles for the form container, ensuring a consistent and visually appealing design. The SellersPage is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience. 
+Description: This SCSS file defines the styles for the SellersPage in a frontend application. It includes styles for the add/edit modal form, ensuring a consistent and visually appealing design. The SellersPage is designed to be flexible and responsive, with appropriate spacing and typography for better readability and user experience.
 */
 
 @use '@/styles/variables' as *;
 @use '@/styles/mixins' as *;
 
 .form {
-  @include card;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: $space-3;
-  margin-bottom: $space-5;
-
-  @include respond('tablet') {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
 }
 
 .checkboxField {
   display: flex;
   align-items: center;
   gap: $space-2;
-  padding-bottom: $space-2;
 }
 
-.actions {
+.rowActions {
   display: flex;
   gap: $space-2;
-
-  @include respond('tablet') {
-    grid-column: span 3;
-  }
 }

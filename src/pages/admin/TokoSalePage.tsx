@@ -14,6 +14,7 @@ import EmptyState from '../../components/EmptyState/EmptyState';
 import ErrorState from '../../components/ErrorState/ErrorState';
 import { SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
+import LoadingOverlay from '../../components/LoadingOverlay/LoadingOverlay';
 import styles from './TokoSalePage.module.scss';
 
 interface CartItem {
@@ -208,6 +209,8 @@ export default function TokoSalePage() {
           </div>
         </>
       )}
+
+      {submitting && <LoadingOverlay message="Menyimpan penjualan..." />}
     </div>
   );
 }

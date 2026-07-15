@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/aut
 import { auth } from '../config/firebase';
 import Button from '../components/Button/Button';
 import FormField from '../components/FormField/FormField';
+import LoadingOverlay from '../components/LoadingOverlay/LoadingOverlay';
 import styles from './Login.module.scss';
 
 export default function Login() {
@@ -136,6 +137,8 @@ export default function Login() {
           )}
         </div>
       </div>
+
+      {submitting && <LoadingOverlay message={mode === 'login' ? 'Memproses login...' : 'Mengirim link reset...'} />}
     </div>
   );
 }

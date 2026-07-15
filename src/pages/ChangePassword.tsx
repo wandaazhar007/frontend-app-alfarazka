@@ -3,6 +3,7 @@ import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/Button/Button';
 import FormField from '../components/FormField/FormField';
+import LoadingOverlay from '../components/LoadingOverlay/LoadingOverlay';
 import styles from './ChangePassword.module.scss';
 
 const MIN_LENGTH = 8;
@@ -79,6 +80,8 @@ export default function ChangePassword() {
           Bukan Anda? Keluar
         </button>
       </div>
+
+      {submitting && <LoadingOverlay message="Menyimpan password baru..." />}
     </div>
   );
 }

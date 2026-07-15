@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import type { Role } from '../types/auth';
+import LoadingOverlay from './LoadingOverlay/LoadingOverlay';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -13,7 +14,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   const location = useLocation();
 
   if (loading) {
-    return <p>Memuat...</p>;
+    return <LoadingOverlay message="Memuat..." />;
   }
 
   if (!firebaseUser || !appUser) {

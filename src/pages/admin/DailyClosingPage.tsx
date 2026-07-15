@@ -10,6 +10,7 @@ import EmptyState from '../../components/EmptyState/EmptyState';
 import ErrorState from '../../components/ErrorState/ErrorState';
 import { SkeletonStatCardRow } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
+import LoadingOverlay from '../../components/LoadingOverlay/LoadingOverlay';
 import styles from './DailyClosingPage.module.scss';
 
 export default function DailyClosingPage() {
@@ -56,7 +57,7 @@ export default function DailyClosingPage() {
   return (
     <div>
       <PageHeader
-        description={'Hitung ulang & lihat ringkasan tutup buku harian: penjualan, pengeluaran, dan laba kotor.'}
+        description={'Hitung ulang & lihat ringkasan tutup buku harian: penjualan, HPP, pengeluaran, dan laba.'}
         actions={
           <>
             <input type="date" className={styles.dateInput} value={date} onChange={(e) => setDate(e.target.value)} />
@@ -89,12 +90,16 @@ export default function DailyClosingPage() {
           />
           <StatCard label="Total Penjualan Cash" value={formatRupiah(closing.totalSalesCash)} />
           <StatCard label="Total Penjualan QRIS" value={formatRupiah(closing.totalSalesQris)} />
-          <StatCard label="Total Pengeluaran" value={formatRupiah(closing.totalExpenses)} />
+          <StatCard label="Total HPP" value={formatRupiah(closing.totalCogs)} />
           <StatCard label="Laba Kotor" value={formatRupiah(closing.grossProfit)} />
+          <StatCard label="Total Pengeluaran Operasional" value={formatRupiah(closing.totalExpenses)} />
+          <StatCard label="Laba Bersih" value={formatRupiah(closing.netProfit)} variant="highlight" />
           <StatCard label="Roti Terjual" value={String(closing.totalBreadSold)} />
           <StatCard label="Roti Retur" value={String(closing.totalBreadReturned)} />
         </div>
       )}
+
+      {generating && <LoadingOverlay message="Menghitung tutup buku..." />}
     </div>
   );
 }

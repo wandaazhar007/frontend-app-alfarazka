@@ -1,5 +1,6 @@
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faTriangleExclamation, faXmark, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import Modal from './Modal';
 import Button from '../Button/Button';
 import styles from './Modal.module.scss';
@@ -8,6 +9,8 @@ interface ConfirmModalProps {
   title?: string;
   message: string;
   confirmLabel?: string;
+  /** Icon pada tombol konfirmasi — default ikon hapus, ganti kalau aksinya bukan delete (mis. reset password). */
+  confirmIcon?: IconDefinition;
   onConfirm: () => void;
   onCancel: () => void;
   submitting?: boolean;
@@ -18,6 +21,7 @@ export default function ConfirmModal({
   title = 'Konfirmasi',
   message,
   confirmLabel = 'Ya, Hapus',
+  confirmIcon = faTrashCan,
   onConfirm,
   onCancel,
   submitting = false,
@@ -29,10 +33,10 @@ export default function ConfirmModal({
       onClose={onCancel}
       footer={
         <>
-          <Button variant="secondary" onClick={onCancel} disabled={submitting}>
+          <Button variant="secondary" onClick={onCancel} disabled={submitting} icon={<FontAwesomeIcon icon={faXmark} />}>
             Batal
           </Button>
-          <Button variant="danger" onClick={onConfirm} disabled={submitting}>
+          <Button variant="danger" onClick={onConfirm} disabled={submitting} icon={<FontAwesomeIcon icon={confirmIcon} />}>
             {submitting ? 'Menghapus...' : confirmLabel}
           </Button>
         </>

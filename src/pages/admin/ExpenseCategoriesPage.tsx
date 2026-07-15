@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faPenToSquare, faFloppyDisk, faXmark, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faFloppyDisk, faXmark, faPenToSquare, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
-import type { Customer, CustomerFormValues } from '../../types/customer';
+import type { ExpenseCategory, ExpenseCategoryFormValues } from '../../types/expense';
 import type { Paginated } from '../../types/pagination';
 import { PAGE_SIZE } from '../../utils/constants';
 import Pagination from '../../components/Pagination/Pagination';
@@ -11,41 +12,44 @@ import Button from '../../components/Button/Button';
 import FormField from '../../components/FormField/FormField';
 import Table, { type TableColumn } from '../../components/Table/Table';
 import Modal from '../../components/Modal/Modal';
-import ConfirmModal from '../../components/Modal/ConfirmModal';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import ErrorState from '../../components/ErrorState/ErrorState';
+import ConfirmModal from '../../components/Modal/ConfirmModal';
 import { SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
 import LoadingOverlay from '../../components/LoadingOverlay/LoadingOverlay';
-import styles from './CustomersPage.module.scss';
+import styles from './ExpenseCategoriesPage.module.scss';
 
-const emptyForm: CustomerFormValues = { name: '', phone: '', address: '', customerType: 'individual' };
+const emptyForm: ExpenseCategoryFormValues = { name: '' };
+const NAME_MAX_LENGTH = 50;
 
 interface FormErrors {
   name?: string;
 }
 
-export default function CustomersPage() {
+export default function ExpenseCategoriesPage() {
   const { showToast } = useToast();
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState<CustomerFormValues>(emptyForm);
+  const [form, setForm] = useState<ExpenseCategoryFormValues>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ExpenseCategory | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const loadCustomers = async () => {
+  const loadCategories = async () => {
     setLoading(true);
     setError(false);
     try {
-      const { data } = await api.get<Paginated<Customer>>('/api/customers', { params: { page, pageSize: PAGE_SIZE } });
-      setCustomers(data.data);
+      const { data } = await api.get<Paginated<ExpenseCategory>>('/api/expense-categories', {
+        params: { page, pageSize: PAGE_SIZE },
+      });
+      setCategories(data.data);
       setTotal(data.total);
     } catch {
       setError(true);
@@ -55,7 +59,7 @@ export default function CustomersPage() {
   };
 
   useEffect(() => {
-    loadCustomers();
+    loadCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
@@ -66,14 +70,9 @@ export default function CustomersPage() {
     setShowModal(true);
   };
 
-  const openEditModal = (customer: Customer) => {
-    setEditingId(customer.id);
-    setForm({
-      name: customer.name,
-      phone: customer.phone ?? '',
-      address: customer.address ?? '',
-      customerType: customer.customerType,
-    });
+  const openEditModal = (category: ExpenseCategory) => {
+    setEditingId(category.id);
+    setForm({ name: category.name });
     setErrors({});
     setShowModal(true);
   };
@@ -87,7 +86,12 @@ export default function CustomersPage() {
 
   const validateForm = (): boolean => {
     const nextErrors: FormErrors = {};
-    if (!form.name.trim()) nextErrors.name = 'Nama pelanggan wajib diisi.';
+    const trimmedName = form.name.trim();
+    if (!trimmedName) {
+      nextErrors.name = 'Nama kategori wajib diisi.';
+    } else if (trimmedName.length > NAME_MAX_LENGTH) {
+      nextErrors.name = `Nama kategori maksimal ${NAME_MAX_LENGTH} karakter.`;
+    }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   };
@@ -98,25 +102,19 @@ export default function CustomersPage() {
 
     setSubmitting(true);
 
-    const payload = {
-      name: form.name.trim(),
-      phone: form.phone.trim() || null,
-      address: form.address.trim() || null,
-      customerType: form.customerType,
-    };
-
     try {
+      const payload = { name: form.name.trim() };
       if (editingId) {
-        await api.put(`/api/customers/${editingId}`, payload);
+        await api.put(`/api/expense-categories/${editingId}`, payload);
       } else {
-        await api.post('/api/customers', payload);
+        await api.post('/api/expense-categories', payload);
       }
-      showToast('success', editingId ? 'Pelanggan berhasil diperbarui.' : 'Pelanggan berhasil ditambahkan.');
+      showToast('success', editingId ? 'Kategori berhasil diperbarui.' : 'Kategori berhasil ditambahkan.');
       closeModal();
-      await loadCustomers();
+      await loadCategories();
     } catch (err: unknown) {
       const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Gagal menyimpan pelanggan.';
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Gagal menyimpan kategori.';
       showToast('danger', message);
     } finally {
       setSubmitting(false);
@@ -127,24 +125,21 @@ export default function CustomersPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      await api.delete(`/api/customers/${deleteTarget.id}`);
-      showToast('success', 'Pelanggan berhasil dihapus.');
+      await api.delete(`/api/expense-categories/${deleteTarget.id}`);
+      showToast('success', 'Kategori berhasil dihapus.');
       setDeleteTarget(null);
-      await loadCustomers();
+      await loadCategories();
     } catch (err: unknown) {
       const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Gagal menghapus pelanggan.';
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Gagal menghapus kategori.';
       showToast('danger', message);
     } finally {
       setDeleting(false);
     }
   };
 
-  const columns: TableColumn<Customer>[] = [
+  const columns: TableColumn<ExpenseCategory>[] = [
     { key: 'name', header: 'Nama', render: (c) => c.name },
-    { key: 'phone', header: 'No. HP', render: (c) => c.phone ?? '-' },
-    { key: 'address', header: 'Alamat', render: (c) => c.address ?? '-' },
-    { key: 'type', header: 'Tipe', render: (c) => (c.customerType === 'langganan' ? 'Langganan' : 'Individual') },
     {
       key: 'action',
       header: '',
@@ -166,28 +161,31 @@ export default function CustomersPage() {
   return (
     <div>
       <PageHeader
-        description="Kelola data pelanggan untuk penjualan paket & langganan."
+        description="Kelola kategori pengeluaran (mis. bahan baku, gaji, sewa, uang makan penjual)."
         actions={
           <Button variant="primary" icon={<FontAwesomeIcon icon={faPlus} />} onClick={openAddModal}>
-            Tambah Pelanggan
+            Tambah Kategori
           </Button>
         }
       />
+      <p className={styles.hint}>
+        <Link to="/admin/expenses">&larr; Kembali ke Kelola Pengeluaran</Link>
+      </p>
 
       {loading ? (
-        <SkeletonTable rows={4} />
+        <SkeletonTable rows={3} />
       ) : error ? (
-        <ErrorState onRetry={loadCustomers} />
-      ) : customers.length === 0 ? (
-        <EmptyState message="Belum ada pelanggan." />
+        <ErrorState onRetry={loadCategories} />
+      ) : categories.length === 0 ? (
+        <EmptyState message="Belum ada kategori pengeluaran." />
       ) : (
-        <Table columns={columns} data={customers} rowKey={(c) => c.id} />
+        <Table columns={columns} data={categories} rowKey={(c) => String(c.id)} />
       )}
       <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
 
       {showModal && (
         <Modal
-          title={editingId ? 'Edit Pelanggan' : 'Tambah Pelanggan'}
+          title={editingId ? 'Edit Kategori' : 'Tambah Kategori'}
           onClose={closeModal}
           blurBackdrop
           footer={
@@ -207,42 +205,17 @@ export default function CustomersPage() {
           }
         >
           <form onSubmit={handleSubmit} className={styles.form} noValidate>
-            <FormField label="Nama Pelanggan" htmlFor="customer-name" required error={errors.name}>
+            <FormField label="Nama Kategori" htmlFor="expense-category-name" required error={errors.name}>
               <input
-                id="customer-name"
-                placeholder="mis. Ibu Sari"
+                id="expense-category-name"
+                placeholder="mis. Bahan Baku"
                 value={form.name}
                 onChange={(e) => {
                   setForm({ ...form, name: e.target.value });
-                  setErrors((prev) => ({ ...prev, name: undefined }));
+                  setErrors({});
                 }}
+                maxLength={NAME_MAX_LENGTH}
               />
-            </FormField>
-            <FormField label="No. HP" htmlFor="customer-phone">
-              <input
-                id="customer-phone"
-                placeholder="08xxxxxxxxxx"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </FormField>
-            <FormField label="Alamat" htmlFor="customer-address">
-              <input
-                id="customer-address"
-                placeholder="mis. Jl. Merdeka No. 10"
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-              />
-            </FormField>
-            <FormField label="Tipe" htmlFor="customer-type">
-              <select
-                id="customer-type"
-                value={form.customerType}
-                onChange={(e) => setForm({ ...form, customerType: e.target.value as 'individual' | 'langganan' })}
-              >
-                <option value="individual">Individual</option>
-                <option value="langganan">Langganan (warung/kantin/sekolah)</option>
-              </select>
             </FormField>
           </form>
         </Modal>
@@ -250,14 +223,14 @@ export default function CustomersPage() {
 
       {deleteTarget && (
         <ConfirmModal
-          message={`Yakin hapus pelanggan "${deleteTarget.name}"? Tindakan ini tidak bisa dibatalkan.`}
+          message={`Yakin hapus kategori "${deleteTarget.name}"? Kategori yang masih dipakai di data pengeluaran tidak bisa dihapus.`}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}
           submitting={deleting}
         />
       )}
 
-      {submitting && <LoadingOverlay message="Menyimpan pelanggan..." />}
+      {submitting && <LoadingOverlay message="Menyimpan kategori pengeluaran..." />}
     </div>
   );
 }

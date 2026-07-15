@@ -79,6 +79,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: 'Produk', path: '/admin/products', icon: faBreadSlice, roles: ['admin'] },
       { label: 'Kategori Produk', path: '/admin/product-categories', icon: faTags, roles: ['admin'] },
+      { label: 'Kategori Pengeluaran', path: '/admin/expense-categories', icon: faClipboardList, roles: ['admin'] },
       { label: 'Penjual', path: '/admin/sellers', icon: faUsers, roles: ['admin'] },
       { label: 'Pelanggan', path: '/admin/customers', icon: faAddressBook, roles: ['admin'] },
     ],

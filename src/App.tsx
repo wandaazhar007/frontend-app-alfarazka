@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import LoadingOverlay from './components/LoadingOverlay/LoadingOverlay';
 import AppLayout from './components/Layout/AppLayout';
 import SellerLayout from './components/Layout/SellerLayout';
 import Login from './pages/Login';
@@ -15,6 +16,7 @@ import StockEveningPage from './pages/admin/StockEveningPage';
 import DailySettlementPage from './pages/admin/DailySettlementPage';
 import DailyReportPage from './pages/reports/DailyReportPage';
 import ExpensesPage from './pages/admin/ExpensesPage';
+import ExpenseCategoriesPage from './pages/admin/ExpenseCategoriesPage';
 import DailyClosingPage from './pages/admin/DailyClosingPage';
 import CustomersPage from './pages/admin/CustomersPage';
 import TokoSalePage from './pages/admin/TokoSalePage';
@@ -29,7 +31,7 @@ function RootRedirect() {
   const { appUser, loading } = useAuth();
 
   if (loading) {
-    return <p>Memuat...</p>;
+    return <LoadingOverlay message="Memuat..." />;
   }
 
   if (!appUser) {
@@ -45,7 +47,7 @@ function ChangePasswordRoute() {
   const { appUser, loading } = useAuth();
 
   if (loading) {
-    return <p>Memuat...</p>;
+    return <LoadingOverlay message="Memuat..." />;
   }
 
   if (!appUser) {
@@ -151,6 +153,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <ExpensesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/expense-categories"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <ExpenseCategoriesPage />
             </ProtectedRoute>
           }
         />

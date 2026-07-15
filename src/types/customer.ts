@@ -5,6 +5,7 @@ export interface Customer {
   phone: string | null;
   address: string | null;
   customerType: 'individual' | 'langganan';
+  hasUsage: boolean;
   createdAt: string;
 }
 

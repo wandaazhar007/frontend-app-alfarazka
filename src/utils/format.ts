@@ -37,3 +37,14 @@ export function formatTanggal(date: string | Date, style: 'panjang' | 'pendek' =
 export function formatAngka(n: number): string {
   return new Intl.NumberFormat('id-ID').format(n);
 }
+
+// Untuk input rupiah yang menampilkan "Rp." sambil diketik (beda dari formatRupiah
+// yang untuk tampilan read-only) — dipakai bareng parseRupiahInput.
+export function formatInputRupiah(value: number | ''): string {
+  return value === '' ? '' : `Rp. ${new Intl.NumberFormat('id-ID').format(value)}`;
+}
+
+export function parseRupiahInput(raw: string): number | '' {
+  const digitsOnly = raw.replace(/\D/g, '');
+  return digitsOnly === '' ? '' : Number(digitsOnly);
+}

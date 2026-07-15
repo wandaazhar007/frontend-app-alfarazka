@@ -193,8 +193,10 @@ export default function OwnerDashboard() {
             <StatCard label="Total Penjualan" value={formatRupiah(report.summary.totalPenjualan)} variant="highlight" />
             <StatCard label="Total Cash" value={formatRupiah(report.summary.totalCash)} />
             <StatCard label="Total QRIS" value={formatRupiah(report.summary.totalQris)} />
-            <StatCard label="Total Pengeluaran" value={closing ? formatRupiah(closing.totalExpenses) : 'Belum di-generate'} />
+            <StatCard label="Total HPP" value={closing ? formatRupiah(closing.totalCogs) : 'Belum di-generate'} />
             <StatCard label="Laba Kotor" value={closing ? formatRupiah(closing.grossProfit) : 'Belum di-generate'} />
+            <StatCard label="Total Pengeluaran Operasional" value={closing ? formatRupiah(closing.totalExpenses) : 'Belum di-generate'} />
+            <StatCard label="Laba Bersih" value={closing ? formatRupiah(closing.netProfit) : 'Belum di-generate'} variant="highlight" />
             <StatCard label="Roti Terjual" value={String(report.summary.totalQtySold)} />
           </div>
 

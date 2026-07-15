@@ -4,6 +4,7 @@ export interface Seller {
   branchId: string;
   qrisTerminalId: string | null;
   dailyMealAllowance: number;
+  hasUsage: boolean;
   isActive: boolean;
   createdAt: string;
   name: string;
@@ -16,6 +17,6 @@ export interface SellerFormValues {
   email: string;
   phone: string;
   qrisTerminalId: string;
-  dailyMealAllowance: number;
+  dailyMealAllowance: number | '';
   isActive: boolean;
 }

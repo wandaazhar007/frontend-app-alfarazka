@@ -8,11 +8,30 @@ Description: This SCSS file defines the styles for the PaketSalePage in a fronte
 @use '@/styles/variables' as *;
 @use '@/styles/mixins' as *;
 
+// `.content` (AppLayout) sudah `flex: 1` di dalam kolom flex yang tingginya penuh
+// (lihat AppLayout.module.scss) — `min-height: 100%` di sini mewarisi tinggi itu,
+// supaya `.formArea` di bawah punya ruang buat menengahkan card form-nya.
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+// Card form-nya sendiri yang ditengahkan (atas-bawah & kiri-kanan) di sisa ruang
+// setelah PageHeader + hint — bukan seluruh halaman, supaya header tetap di atas.
+.formArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .form {
   @include card;
   display: grid;
   grid-template-columns: 1fr;
   gap: $space-3;
+  width: 100%;
   max-width: 48rem;
 
   @include respond('tablet') {
@@ -21,6 +40,11 @@ Description: This SCSS file defines the styles for the PaketSalePage in a fronte
 }
 
 .fullWidth {
+  // Tombol aksi rata kanan — konsisten dengan footer Modal di halaman lain
+  // (lihat Modal.module.scss .footer: justify-content: flex-end).
+  display: flex;
+  justify-content: flex-end;
+
   @include respond('tablet') {
     grid-column: 1 / -1;
   }
