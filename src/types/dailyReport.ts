@@ -84,7 +84,11 @@ export interface DailyReportSummary {
 }
 
 export interface DailyReport {
-  date: string;
+  /** Diisi kalau request pakai `date` (satu hari). */
+  date?: string;
+  /** Diisi kalau request pakai `from`/`to` (rentang tanggal). */
+  from?: string;
+  to?: string;
   keliling: { sellers: SellerReportRow[]; summary: KelilingSummary };
   toko: { sales: TokoSaleRow[]; summary: TokoSummary };
   paket: { sales: PaketSaleRow[]; summary: PaketSummary };

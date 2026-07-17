@@ -7,10 +7,18 @@ import FormField from '../components/FormField/FormField';
 import LoadingOverlay from '../components/LoadingOverlay/LoadingOverlay';
 import styles from './Login.module.scss';
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+interface FormErrors {
+  email?: string;
+  password?: string;
+}
+
 export default function Login() {
   const [mode, setMode] = useState<'login' | 'lupa-password'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<FormErrors>({});
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -19,12 +27,32 @@ export default function Login() {
 
   const switchMode = (next: 'login' | 'lupa-password') => {
     setMode(next);
+    setErrors({});
     setError(null);
     setSuccessMessage(null);
   };
 
+  const validateLogin = (): boolean => {
+    const nextErrors: FormErrors = {};
+    if (!email.trim()) nextErrors.email = 'Email wajib diisi.';
+    else if (!EMAIL_REGEX.test(email.trim())) nextErrors.email = 'Format email tidak valid.';
+    if (!password) nextErrors.password = 'Password wajib diisi.';
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const validateForgot = (): boolean => {
+    const nextErrors: FormErrors = {};
+    if (!email.trim()) nextErrors.email = 'Email wajib diisi.';
+    else if (!EMAIL_REGEX.test(email.trim())) nextErrors.email = 'Format email tidak valid.';
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
+    if (!validateLogin()) return;
+
     setError(null);
     setSubmitting(true);
 
@@ -41,6 +69,8 @@ export default function Login() {
 
   const handleForgotPassword = async (e: FormEvent) => {
     e.preventDefault();
+    if (!validateForgot()) return;
+
     setError(null);
     setSuccessMessage(null);
     setSubmitting(true);
@@ -76,25 +106,29 @@ export default function Login() {
 
               {error && <div className={styles.errorBox}>{error}</div>}
 
-              <form className={styles.form} onSubmit={handleLogin}>
-                <FormField label="Email" htmlFor="email">
+              <form className={styles.form} onSubmit={handleLogin} noValidate>
+                <FormField label="Email" htmlFor="email" required error={errors.email}>
                   <input
                     id="email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setErrors((prev) => ({ ...prev, email: undefined }));
+                    }}
                     autoComplete="email"
-                    required
                   />
                 </FormField>
-                <FormField label="Password" htmlFor="password">
+                <FormField label="Password" htmlFor="password" required error={errors.password}>
                   <input
                     id="password"
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setErrors((prev) => ({ ...prev, password: undefined }));
+                    }}
                     autoComplete="current-password"
-                    required
                   />
                 </FormField>
                 <Button type="submit" variant="primary" disabled={submitting} className={styles.submitButton}>
@@ -114,15 +148,17 @@ export default function Login() {
               {error && <div className={styles.errorBox}>{error}</div>}
               {successMessage && <div className={styles.successBox}>{successMessage}</div>}
 
-              <form className={styles.form} onSubmit={handleForgotPassword}>
-                <FormField label="Email" htmlFor="forgot-email">
+              <form className={styles.form} onSubmit={handleForgotPassword} noValidate>
+                <FormField label="Email" htmlFor="forgot-email" required error={errors.email}>
                   <input
                     id="forgot-email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setErrors((prev) => ({ ...prev, email: undefined }));
+                    }}
                     autoComplete="email"
-                    required
                   />
                 </FormField>
                 <Button type="submit" variant="primary" disabled={submitting} className={styles.submitButton}>

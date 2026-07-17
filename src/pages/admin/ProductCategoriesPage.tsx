@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faPenToSquare, faFloppyDisk, faXmark, faTrashCan } from '@fortawesome/free-solid-svg-icons';
@@ -14,6 +14,7 @@ import Badge from '../../components/Badge/Badge';
 import Table, { type TableColumn } from '../../components/Table/Table';
 import Modal from '../../components/Modal/Modal';
 import ConfirmModal from '../../components/Modal/ConfirmModal';
+import SearchBox from '../../components/SearchBox/SearchBox';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import ErrorState from '../../components/ErrorState/ErrorState';
 import { SkeletonTable } from '../../components/Skeleton/Skeleton';
@@ -32,6 +33,8 @@ export default function ProductCategoriesPage() {
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -42,26 +45,50 @@ export default function ProductCategoriesPage() {
   const [deleteTarget, setDeleteTarget] = useState<ProductCategory | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Mengganti kata kunci pencarian sambil di halaman >1 memicu 2 request beruntun
+  // (satu masih dengan `page` lama sebelum di-reset ke 1, satu lagi dengan page yang
+  // sudah benar — lihat kedua useEffect di bawah). Kalau request PERTAMA (page lama,
+  // hasilnya salah/kosong) selesai BELAKANGAN dari request KEDUA (page benar) karena
+  // variasi waktu jaringan, hasil yang salah itu akan menimpa hasil yang benar di
+  // layar. Request ID di sini memastikan cuma response dari request TERAKHIR yang
+  // pernah dikirim yang boleh meng-update state, apapun urutan response-nya datang.
+  const requestIdRef = useRef(0);
+
   const loadCategories = async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(false);
     try {
       const { data } = await api.get<Paginated<ProductCategory>>('/api/product-categories', {
-        params: { page, pageSize: PAGE_SIZE },
+        params: { page, pageSize: PAGE_SIZE, search: debouncedSearch || undefined },
       });
+      if (requestId !== requestIdRef.current) return;
       setCategories(data.data);
       setTotal(data.total);
     } catch {
+      if (requestId !== requestIdRef.current) return;
       setError(true);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   };
+
+  // Live search dengan debounce (300ms) — tidak query tiap ketukan tombol,
+  // cukup begitu admin berhenti mengetik sejenak.
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  // Ganti kata kunci pencarian = konteks list baru, selalu mulai dari halaman 1.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     loadCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, debouncedSearch]);
 
   const openAddModal = () => {
     setEditingId(null);
@@ -169,12 +196,14 @@ export default function ProductCategoriesPage() {
         <Link to="/admin/products">&larr; Kembali ke Kelola Produk</Link>
       </p>
 
+      <SearchBox value={search} onChange={setSearch} placeholder="Cari nama kategori..." />
+
       {loading ? (
         <SkeletonTable rows={3} />
       ) : error ? (
         <ErrorState onRetry={loadCategories} />
       ) : categories.length === 0 ? (
-        <EmptyState message="Belum ada kategori produk." />
+        <EmptyState message={debouncedSearch ? 'Tidak ada kategori dengan nama tersebut.' : 'Belum ada kategori produk.'} />
       ) : (
         <Table columns={columns} data={categories} rowKey={(c) => c.id} />
       )}

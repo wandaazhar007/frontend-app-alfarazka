@@ -12,7 +12,8 @@ export function formatRupiah(amount: number): string {
 
 // 'panjang' -> "Senin, 8 Juli 2026" (page detail/header)
 // 'pendek'  -> "08/07/2026" (table column)
-export function formatTanggal(date: string | Date, style: 'panjang' | 'pendek' = 'pendek'): string {
+// 'dash'    -> "08-Juli-2026" (mis. badge rentang tanggal terpilih)
+export function formatTanggal(date: string | Date, style: 'panjang' | 'pendek' | 'dash' = 'pendek'): string {
   const d = typeof date === 'string' ? new Date(date) : date;
 
   if (style === 'panjang') {
@@ -23,6 +24,17 @@ export function formatTanggal(date: string | Date, style: 'panjang' | 'pendek' =
       year: 'numeric',
       timeZone: 'Asia/Jakarta',
     }).format(d);
+  }
+
+  if (style === 'dash') {
+    const parts = new Intl.DateTimeFormat('id-ID', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Asia/Jakarta',
+    }).formatToParts(d);
+    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+    return `${get('day')}-${get('month')}-${get('year')}`;
   }
 
   return new Intl.DateTimeFormat('id-ID', {

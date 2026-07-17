@@ -8,29 +8,67 @@ Description: This SCSS file defines the styles for the ExpensesPage in a fronten
 @use '@/styles/variables' as *;
 @use '@/styles/mixins' as *;
 
-.dateInput {
-  height: 4rem;
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
-  padding: 0 $space-3;
-  @include focus-ring;
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
 }
 
-.form {
-  @include card;
+.actionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+  margin-bottom: $space-4;
+}
+
+.filterRow {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  align-items: stretch;
+  margin-bottom: $space-4;
+
+  @include respond('tablet') {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+.dateFields {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+
+  @include respond('tablet') {
+    flex-direction: row;
+
+    > * {
+      flex: 1;
+      min-width: 16rem;
+    }
+  }
+}
+
+.exportButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.selectedRangeRow {
+  margin-bottom: $space-4;
+}
+
+.statGrid {
   display: grid;
   grid-template-columns: 1fr;
   gap: $space-3;
   margin-bottom: $space-5;
 
   @include respond('tablet') {
-    grid-template-columns: repeat(3, 1fr) auto;
-    align-items: end;
+    grid-template-columns: repeat(3, 1fr);
   }
-}
-
-.mealAllowanceRow {
-  margin-bottom: $space-4;
 }
 
 .actions {

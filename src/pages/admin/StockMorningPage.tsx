@@ -59,7 +59,13 @@ const FORM_STORAGE_KEY = 'stock-morning-form';
 function loadStoredForm(): PersistedForm | null {
   try {
     const raw = localStorage.getItem(FORM_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as PersistedForm) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedForm;
+    // Entri stok pagi cuma relevan untuk HARI itu — kalau tanggal yang tersimpan
+    // bukan hari ini (mis. browser dibuka lagi besoknya), buang semuanya supaya
+    // halaman selalu default ke hari ini dengan form kosong.
+    if (parsed.date !== todayJakarta()) return null;
+    return parsed;
   } catch {
     return null;
   }

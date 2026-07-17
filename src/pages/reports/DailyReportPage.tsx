@@ -11,21 +11,32 @@ import EmptyState from '../../components/EmptyState/EmptyState';
 import ErrorState from '../../components/ErrorState/ErrorState';
 import { SkeletonStatCardRow, SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
-import downloadReport from '../../utils/downloadReport';
+import downloadReportRange from '../../utils/downloadReportRange';
 import styles from './DailyReportPage.module.scss';
 
 export default function DailyReportPage() {
   const { showToast } = useToast();
-  const [date, setDate] = useState(todayJakarta());
+  const [fromDate, setFromDate] = useState(todayJakarta());
+  const [toDate, setToDate] = useState(todayJakarta());
   const [report, setReport] = useState<DailyReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  const handleFromDateChange = (value: string) => {
+    setFromDate(value);
+    if (value > toDate) setToDate(value);
+  };
+
+  const handleToDateChange = (value: string) => {
+    setToDate(value);
+    if (value < fromDate) setFromDate(value);
+  };
+
   const handleExport = async (format: 'pdf' | 'xlsx') => {
     setExporting(true);
     try {
-      await downloadReport(date, format);
+      await downloadReportRange(fromDate, toDate, format);
     } catch {
       showToast('danger', 'Gagal export laporan.');
     } finally {
@@ -37,7 +48,7 @@ export default function DailyReportPage() {
     setLoading(true);
     setError(false);
     try {
-      const { data } = await api.get<DailyReport>('/api/reports/daily', { params: { date } });
+      const { data } = await api.get<DailyReport>('/api/reports/daily', { params: { from: fromDate, to: toDate } });
       setReport(data);
     } catch {
       setError(true);
@@ -49,7 +60,7 @@ export default function DailyReportPage() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date]);
+  }, [fromDate, toDate]);
 
   const kelilingColumns: TableColumn<SellerReportRow>[] = [
     { key: 'seller', header: 'Penjual', render: (r) => r.sellerName },
@@ -70,7 +81,7 @@ export default function DailyReportPage() {
   const paketColumns: TableColumn<PaketSaleRow>[] = [
     { key: 'name', header: 'Nama Paket', render: (s) => s.customName ?? '-' },
     { key: 'customer', header: 'Pelanggan', render: (s) => s.customerName ?? '-' },
-    { key: 'received', header: 'Diterima Hari Ini', align: 'right', render: (s) => formatRupiah(s.cash + s.qris) },
+    { key: 'received', header: 'Diterima', align: 'right', render: (s) => formatRupiah(s.cash + s.qris) },
     { key: 'total', header: 'Nilai Paket', align: 'right', render: (s) => formatRupiah(s.totalAmount) },
     { key: 'status', header: 'Status', render: (s) => s.paymentStatus },
   ];
@@ -81,7 +92,20 @@ export default function DailyReportPage() {
         description="Laporan harian gabungan: keliling + toko + paket dalam satu tempat."
         actions={
           <>
-            <input type="date" className={styles.dateInput} value={date} onChange={(e) => setDate(e.target.value)} />
+            <input
+              type="date"
+              className={styles.dateInput}
+              title="Dari Tanggal"
+              value={fromDate}
+              onChange={(e) => handleFromDateChange(e.target.value)}
+            />
+            <input
+              type="date"
+              className={styles.dateInput}
+              title="Sampai Tanggal"
+              value={toDate}
+              onChange={(e) => handleToDateChange(e.target.value)}
+            />
             <Button variant="secondary" onClick={() => handleExport('pdf')} disabled={exporting}>
               Export PDF
             </Button>

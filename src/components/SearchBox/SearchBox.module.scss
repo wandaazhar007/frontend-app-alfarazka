@@ -1,0 +1,56 @@
+/*
+Author: Wanda Azhar
+Location: Michigan, USA
+Contact: wandaazhar@gmail.com
+Description: This SCSS file defines the styles for the SearchBox component in a frontend application. It includes styles for the search input, leading icon, and clear button, ensuring a consistent and visually appealing design across every page that lists searchable data.
+*/
+
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.searchBox {
+  position: relative;
+  max-width: 32rem;
+  margin-bottom: $space-4;
+}
+
+.searchIcon {
+  position: absolute;
+  left: $space-3;
+  top: 50%;
+  transform: translateY(-50%);
+  color: $color-text-muted;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 4.4rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 0 $space-6 0 4.4rem;
+  @include focus-ring;
+}
+
+.searchClear {
+  @include focus-ring;
+  position: absolute;
+  right: $space-2;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: $color-text-muted;
+  cursor: pointer;
+  width: 3.2rem;
+  height: 3.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-sm;
+
+  &:hover {
+    background: $color-bg-soft;
+    color: $color-text-main;
+  }
+}

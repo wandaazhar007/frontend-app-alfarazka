@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faPenToSquare, faFloppyDisk, faXmark, faTrashCan } from '@fortawesome/free-solid-svg-icons';
@@ -17,6 +17,7 @@ import Table, { type TableColumn } from '../../components/Table/Table';
 import Modal from '../../components/Modal/Modal';
 import ConfirmModal from '../../components/Modal/ConfirmModal';
 import Combobox from '../../components/Combobox/Combobox';
+import SearchBox from '../../components/SearchBox/SearchBox';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import ErrorState from '../../components/ErrorState/ErrorState';
 import { SkeletonTable } from '../../components/Skeleton/Skeleton';
@@ -38,6 +39,8 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -49,17 +52,31 @@ export default function ProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Mengganti kata kunci pencarian sambil di halaman >1 memicu 2 request beruntun
+  // (satu masih dengan `page` lama sebelum di-reset ke 1, satu lagi dengan page yang
+  // sudah benar — lihat kedua useEffect di bawah). Kalau request PERTAMA (page lama,
+  // hasilnya salah/kosong) selesai BELAKANGAN dari request KEDUA (page benar) karena
+  // variasi waktu jaringan, hasil yang salah itu akan menimpa hasil yang benar di
+  // layar. Request ID di sini memastikan cuma response dari request TERAKHIR yang
+  // pernah dikirim yang boleh meng-update state, apapun urutan response-nya datang.
+  const requestIdRef = useRef(0);
+
   const loadProducts = async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(false);
     try {
-      const { data } = await api.get<Paginated<Product>>('/api/products', { params: { page, pageSize: PAGE_SIZE } });
+      const { data } = await api.get<Paginated<Product>>('/api/products', {
+        params: { page, pageSize: PAGE_SIZE, search: debouncedSearch || undefined },
+      });
+      if (requestId !== requestIdRef.current) return;
       setProducts(data.data);
       setTotal(data.total);
     } catch {
+      if (requestId !== requestIdRef.current) return;
       setError(true);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   };
 
@@ -74,10 +91,22 @@ export default function ProductsPage() {
     }
   };
 
+  // Live search dengan debounce (300ms) — tidak query tiap ketukan tombol,
+  // cukup begitu admin berhenti mengetik sejenak.
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  // Ganti kata kunci pencarian = konteks list baru, selalu mulai dari halaman 1.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
   useEffect(() => {
     loadProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, debouncedSearch]);
 
   useEffect(() => {
     loadCategories();
@@ -207,12 +236,14 @@ export default function ProductsPage() {
         <Link to="/admin/product-categories">Kelola Kategori Produk</Link>
       </p>
 
+      <SearchBox value={search} onChange={setSearch} placeholder="Cari nama produk..." />
+
       {loading ? (
         <SkeletonTable rows={4} />
       ) : error ? (
         <ErrorState onRetry={loadProducts} />
       ) : products.length === 0 ? (
-        <EmptyState message="Belum ada produk." />
+        <EmptyState message={debouncedSearch ? 'Tidak ada produk dengan nama tersebut.' : 'Belum ada produk.'} />
       ) : (
         <Table columns={columns} data={products} rowKey={(p) => p.id} />
       )}

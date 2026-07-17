@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faPenToSquare, faFloppyDisk, faXmark, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
@@ -14,6 +14,7 @@ import Badge from '../../components/Badge/Badge';
 import Table, { type TableColumn } from '../../components/Table/Table';
 import Modal from '../../components/Modal/Modal';
 import ConfirmModal from '../../components/Modal/ConfirmModal';
+import SearchBox from '../../components/SearchBox/SearchBox';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import ErrorState from '../../components/ErrorState/ErrorState';
 import { SkeletonTable } from '../../components/Skeleton/Skeleton';
@@ -42,6 +43,8 @@ export default function SellersPage() {
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -53,24 +56,50 @@ export default function SellersPage() {
   const [deleteTarget, setDeleteTarget] = useState<Seller | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Mengganti kata kunci pencarian sambil di halaman >1 memicu 2 request beruntun
+  // (satu masih dengan `page` lama sebelum di-reset ke 1, satu lagi dengan page yang
+  // sudah benar — lihat kedua useEffect di bawah). Kalau request PERTAMA (page lama,
+  // hasilnya salah/kosong) selesai BELAKANGAN dari request KEDUA (page benar) karena
+  // variasi waktu jaringan, hasil yang salah itu akan menimpa hasil yang benar di
+  // layar. Request ID di sini memastikan cuma response dari request TERAKHIR yang
+  // pernah dikirim yang boleh meng-update state, apapun urutan response-nya datang.
+  const requestIdRef = useRef(0);
+
   const loadSellers = async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(false);
     try {
-      const { data } = await api.get<Paginated<Seller>>('/api/sellers', { params: { page, pageSize: PAGE_SIZE } });
+      const { data } = await api.get<Paginated<Seller>>('/api/sellers', {
+        params: { page, pageSize: PAGE_SIZE, search: debouncedSearch || undefined },
+      });
+      if (requestId !== requestIdRef.current) return;
       setSellers(data.data);
       setTotal(data.total);
     } catch {
+      if (requestId !== requestIdRef.current) return;
       setError(true);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   };
+
+  // Live search dengan debounce (300ms) — tidak query tiap ketukan tombol,
+  // cukup begitu admin berhenti mengetik sejenak.
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  // Ganti kata kunci pencarian = konteks list baru, selalu mulai dari halaman 1.
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     loadSellers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, debouncedSearch]);
 
   const openAddModal = () => {
     setEditingId(null);
@@ -208,12 +237,14 @@ export default function SellersPage() {
 
       {tempPassword && <TempPasswordBanner password={tempPassword} />}
 
+      <SearchBox value={search} onChange={setSearch} placeholder="Cari nama penjual..." />
+
       {loading ? (
         <SkeletonTable rows={4} />
       ) : error ? (
         <ErrorState onRetry={loadSellers} />
       ) : sellers.length === 0 ? (
-        <EmptyState message="Belum ada penjual." />
+        <EmptyState message={debouncedSearch ? 'Tidak ada penjual dengan nama tersebut.' : 'Belum ada penjual.'} />
       ) : (
         <Table columns={columns} data={sellers} rowKey={(s) => s.id} />
       )}

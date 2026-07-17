@@ -35,6 +35,7 @@ interface FieldErrors {
   customerId?: boolean;
   customName?: boolean;
   totalAmount?: boolean;
+  dueDate?: boolean;
 }
 
 export default function PaketSalePage() {
@@ -79,9 +80,11 @@ export default function PaketSalePage() {
       customerId: !customerId,
       customName: !customName.trim(),
       totalAmount: !totalAmount || totalAmount <= 0,
+      dueDate: !dueDate,
     };
     setFieldErrors(errors);
-    if (errors.customerId || errors.customName || errors.totalAmount || dpExceedsTotal || dueDateBeforeSaleDate) return;
+    if (errors.customerId || errors.customName || errors.totalAmount || errors.dueDate || dpExceedsTotal || dueDateBeforeSaleDate)
+      return;
 
     setSubmitting(true);
 
@@ -208,10 +211,24 @@ export default function PaketSalePage() {
             <FormField
               label="Jatuh Tempo Pelunasan"
               htmlFor="paket-due-date"
-              help="Opsional"
-              error={dueDateBeforeSaleDate ? 'Jatuh tempo tidak boleh lebih awal dari Tanggal' : undefined}
+              required
+              error={
+                fieldErrors.dueDate
+                  ? 'Jatuh tempo wajib diisi'
+                  : dueDateBeforeSaleDate
+                    ? 'Jatuh tempo tidak boleh lebih awal dari Tanggal'
+                    : undefined
+              }
             >
-              <input id="paket-due-date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              <input
+                id="paket-due-date"
+                type="date"
+                value={dueDate}
+                onChange={(e) => {
+                  setFieldErrors((prev) => ({ ...prev, dueDate: false }));
+                  setDueDate(e.target.value);
+                }}
+              />
             </FormField>
 
             <div className={styles.fullWidth}>
