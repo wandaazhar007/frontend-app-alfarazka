@@ -13,6 +13,18 @@ Description: This SCSS file defines the styles for the SellerDashboard page in a
   margin: $space-5 0 $space-3;
 }
 
+.dateInput {
+  height: 4rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 0 $space-3;
+  @include focus-ring;
+}
+
+.selectedRangeRow {
+  margin-bottom: $space-4;
+}
+
 .statGrid {
   display: grid;
   grid-template-columns: 1fr;

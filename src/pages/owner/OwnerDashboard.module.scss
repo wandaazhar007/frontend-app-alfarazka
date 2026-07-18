@@ -8,6 +8,19 @@ Description: This SCSS file defines the styles for the OwnerDashboard page in a 
 @use '@/styles/variables' as *;
 @use '@/styles/mixins' as *;
 
+.selectedRangeRow {
+  margin-bottom: $space-4;
+}
+
+// Disamakan dengan ukuran .value di StatCard.module.scss supaya badge tanggal
+// ini terasa sepadan (bukan status pill kecil biasa seperti "Aktif").
+.dateBadge {
+  font-family: $font-family-heading;
+  font-size: 2.4rem;
+  font-weight: 700;
+  padding: $space-2 $space-4;
+}
+
 .statGrid {
   display: grid;
   grid-template-columns: 1fr;

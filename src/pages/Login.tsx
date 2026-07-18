@@ -1,6 +1,8 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { auth } from '../config/firebase';
 import Button from '../components/Button/Button';
 import FormField from '../components/FormField/FormField';
@@ -8,6 +10,7 @@ import LoadingOverlay from '../components/LoadingOverlay/LoadingOverlay';
 import styles from './Login.module.scss';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_STORAGE_KEY = 'login-email';
 
 interface FormErrors {
   email?: string;
@@ -16,14 +19,21 @@ interface FormErrors {
 
 export default function Login() {
   const [mode, setMode] = useState<'login' | 'lupa-password'>('login');
-  const [email, setEmail] = useState('');
+  // Email di-persist ke localStorage supaya tidak perlu ketik ulang tiap kali buka
+  // halaman login (mis. setelah logout) — password TIDAK ikut di-persist (sensitif).
+  const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_STORAGE_KEY) ?? '');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    localStorage.setItem(EMAIL_STORAGE_KEY, email);
+  }, [email]);
 
   const switchMode = (next: 'login' | 'lupa-password') => {
     setMode(next);
@@ -120,16 +130,27 @@ export default function Login() {
                   />
                 </FormField>
                 <FormField label="Password" htmlFor="password" required error={errors.password}>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setErrors((prev) => ({ ...prev, password: undefined }));
-                    }}
-                    autoComplete="current-password"
-                  />
+                  <div className={styles.passwordField}>
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setErrors((prev) => ({ ...prev, password: undefined }));
+                      }}
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      className={styles.passwordToggle}
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                      title={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                    >
+                      <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                    </button>
+                  </div>
                 </FormField>
                 <Button type="submit" variant="primary" disabled={submitting} className={styles.submitButton}>
                   {submitting ? 'Memproses...' : 'Masuk'}

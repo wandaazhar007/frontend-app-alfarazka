@@ -30,7 +30,12 @@ declare global {
   }
 }
 
-const SNAP_SRC = 'https://app.sandbox.midtrans.com/snap/snap.js';
+// Harus sinkron dengan MIDTRANS_IS_PRODUCTION di backend/.env — Snap.js sandbox tidak
+// bisa memproses snapToken yang dibuat dari server key production, dan sebaliknya.
+const SNAP_SRC =
+  import.meta.env.VITE_MIDTRANS_IS_PRODUCTION === 'true'
+    ? 'https://app.midtrans.com/snap/snap.js'
+    : 'https://app.sandbox.midtrans.com/snap/snap.js';
 
 function loadSnapScript(clientKey: string): Promise<void> {
   return new Promise((resolve, reject) => {

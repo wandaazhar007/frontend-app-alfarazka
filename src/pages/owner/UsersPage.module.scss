@@ -9,15 +9,9 @@ Description: This SCSS file defines the styles for the UsersPage in a frontend a
 @use '@/styles/mixins' as *;
 
 .form {
-  @include card;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: $space-3;
-  margin-bottom: $space-5;
-
-  @include respond('tablet') {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
 }
 
 .checkboxField {
@@ -25,15 +19,6 @@ Description: This SCSS file defines the styles for the UsersPage in a frontend a
   align-items: center;
   gap: $space-2;
   padding-bottom: $space-2;
-}
-
-.actions {
-  display: flex;
-  gap: $space-2;
-
-  @include respond('tablet') {
-    grid-column: span 3;
-  }
 }
 
 .sectionTitle {
@@ -45,4 +30,9 @@ Description: This SCSS file defines the styles for the UsersPage in a frontend a
   display: flex;
   gap: $space-2;
   margin-bottom: $space-4;
+}
+
+.rowActions {
+  display: flex;
+  gap: $space-2;
 }

@@ -86,10 +86,21 @@ Description: This SCSS file defines the styles for the Topbar component in a fro
 .userName {
   font-size: 1.3rem;
   font-weight: 600;
+  @include truncate;
+  max-width: 16rem;
+
+  @include respond('tablet') {
+    max-width: none;
+  }
+}
+
+// Label role ("Admin"/"Owner"/"Penjual Keliling") disembunyikan di mobile supaya
+// nama penjual/admin punya ruang — cukup ditampilkan mulai tablet ke atas.
+.roleBadge {
   display: none;
 
   @include respond('tablet') {
-    display: block;
+    display: inline-flex;
   }
 }
 

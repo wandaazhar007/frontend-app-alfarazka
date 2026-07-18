@@ -39,7 +39,9 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
         {appUser && (
           <>
             <span className={styles.userName}>{appUser.name}</span>
-            <Badge tone="neutral">{ROLE_LABEL[appUser.role] ?? appUser.role}</Badge>
+            <Badge tone="neutral" className={styles.roleBadge}>
+              {ROLE_LABEL[appUser.role] ?? appUser.role}
+            </Badge>
           </>
         )}
         <button type="button" className={styles.logoutButton} onClick={logout} aria-label="Keluar">

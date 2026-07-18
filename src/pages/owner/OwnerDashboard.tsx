@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import todayJakarta from '../../utils/todayJakarta';
-import { formatRupiah } from '../../utils/format';
+import { formatRupiah, formatTanggal } from '../../utils/format';
 import StatCard from '../../components/StatCard/StatCard';
+import Badge from '../../components/Badge/Badge';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import Button from '../../components/Button/Button';
 import Table, { type TableColumn } from '../../components/Table/Table';
@@ -13,9 +14,9 @@ import Skeleton, { SkeletonStatCardRow, SkeletonTable } from '../../components/S
 import SalesTrendChart from '../../components/Chart/SalesTrendChart';
 import SellerComparisonChart from '../../components/Chart/SellerComparisonChart';
 import type { DailyReport, SellerReportRow } from '../../types/dailyReport';
-import type { DailyClosing } from '../../types/dailyClosing';
+import type { RangeTotals } from '../../types/dailyClosing';
 import type { Expense } from '../../types/expense';
-import downloadReport from '../../utils/downloadReport';
+import downloadReportRange from '../../utils/downloadReportRange';
 import styles from './OwnerDashboard.module.scss';
 
 function daysAgoJakarta(days: number): string {
@@ -37,9 +38,10 @@ interface SellerComparisonPoint {
 }
 
 export default function OwnerDashboard() {
-  const [date, setDate] = useState(todayJakarta());
+  const [fromDate, setFromDate] = useState(todayJakarta());
+  const [toDate, setToDate] = useState(todayJakarta());
   const [report, setReport] = useState<DailyReport | null>(null);
-  const [closing, setClosing] = useState<DailyClosing | null>(null);
+  const [closing, setClosing] = useState<RangeTotals | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -55,11 +57,21 @@ export default function OwnerDashboard() {
   const [comparisonData, setComparisonData] = useState<SellerComparisonPoint[]>([]);
   const [comparisonLoading, setComparisonLoading] = useState(true);
 
+  const handleFromDateChange = (value: string) => {
+    setFromDate(value);
+    if (value > toDate) setToDate(value);
+  };
+
+  const handleToDateChange = (value: string) => {
+    setToDate(value);
+    if (value < fromDate) setFromDate(value);
+  };
+
   const handleExport = async (format: 'pdf' | 'xlsx') => {
     setExporting(true);
     setExportError(null);
     try {
-      await downloadReport(date, format);
+      await downloadReportRange(fromDate, toDate, format);
     } catch {
       setExportError('Gagal export laporan.');
     } finally {
@@ -72,19 +84,19 @@ export default function OwnerDashboard() {
     setError(false);
     try {
       const [reportRes, closingRes, expensesRes] = await Promise.all([
-        api.get<DailyReport>('/api/reports/daily', { params: { date } }),
-        api.get<DailyClosing[]>('/api/daily-closings', { params: { from: date, to: date } }),
-        api.get<Expense[]>('/api/expenses', { params: { date } }),
+        api.get<DailyReport>('/api/reports/daily', { params: { from: fromDate, to: toDate } }),
+        api.get<RangeTotals>('/api/daily-closings/range-totals', { params: { from: fromDate, to: toDate } }),
+        api.get<Expense[]>('/api/expenses', { params: { from: fromDate, to: toDate } }),
       ]);
       setReport(reportRes.data);
-      setClosing(closingRes.data[0] ?? null);
+      setClosing(closingRes.data);
       setExpenses(expensesRes.data);
     } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [date]);
+  }, [fromDate, toDate]);
 
   useEffect(() => {
     load();
@@ -143,7 +155,20 @@ export default function OwnerDashboard() {
         description="Ringkasan penjualan, pengeluaran, dan laba kotor harian gabungan (keliling + toko + paket)."
         actions={
           <>
-            <input type="date" className={styles.dateInput} value={date} onChange={(e) => setDate(e.target.value)} />
+            <input
+              type="date"
+              className={styles.dateInput}
+              title="Dari Tanggal"
+              value={fromDate}
+              onChange={(e) => handleFromDateChange(e.target.value)}
+            />
+            <input
+              type="date"
+              className={styles.dateInput}
+              title="Sampai Tanggal"
+              value={toDate}
+              onChange={(e) => handleToDateChange(e.target.value)}
+            />
             <Button variant="secondary" onClick={() => handleExport('pdf')} disabled={exporting}>
               Export PDF
             </Button>
@@ -189,6 +214,14 @@ export default function OwnerDashboard() {
         <ErrorState onRetry={load} />
       ) : (
         <>
+          <div className={styles.selectedRangeRow}>
+            <Badge tone="success" className={styles.dateBadge}>
+              {fromDate === toDate
+                ? formatTanggal(fromDate, 'dash')
+                : `${formatTanggal(fromDate, 'dash')} s/d ${formatTanggal(toDate, 'dash')}`}
+            </Badge>
+          </div>
+
           <div className={styles.statGrid}>
             <StatCard label="Total Penjualan" value={formatRupiah(report.summary.totalPenjualan)} variant="highlight" />
             <StatCard label="Total Cash" value={formatRupiah(report.summary.totalCash)} />
@@ -209,7 +242,7 @@ export default function OwnerDashboard() {
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Keliling — Penjualan per Penjual</h2>
             {report.keliling.sellers.length === 0 ? (
-              <EmptyState message="Belum ada penjualan keliling untuk tanggal ini." />
+              <EmptyState message="Belum ada penjualan keliling pada rentang tanggal ini." />
             ) : (
               <Table columns={kelilingColumns} data={report.keliling.sellers} rowKey={(r) => r.sellerId} />
             )}
@@ -221,7 +254,7 @@ export default function OwnerDashboard() {
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Pengeluaran</h2>
             {expenses.length === 0 ? (
-              <EmptyState message="Tidak ada pengeluaran untuk tanggal ini." />
+              <EmptyState message="Tidak ada pengeluaran pada rentang tanggal ini." />
             ) : (
               <Table columns={expenseColumns} data={expenses} rowKey={(r) => r.id} />
             )}

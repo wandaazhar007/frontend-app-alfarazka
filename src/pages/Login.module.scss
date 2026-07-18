@@ -123,6 +123,38 @@ Description: This SCSS file defines the styles for the Login page in a frontend 
   gap: $space-3;
 }
 
+.passwordField {
+  position: relative;
+
+  input {
+    width: 100%;
+    padding-right: 4.4rem;
+  }
+}
+
+.passwordToggle {
+  @include focus-ring;
+  position: absolute;
+  right: $space-2;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: $color-text-muted;
+  cursor: pointer;
+  width: 3.2rem;
+  height: 3.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-sm;
+
+  &:hover {
+    background: $color-bg-soft;
+    color: $color-text-main;
+  }
+}
+
 .errorBox {
   background: rgba(220, 38, 38, 0.08);
   color: $color-danger;

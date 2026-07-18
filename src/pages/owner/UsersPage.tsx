@@ -1,5 +1,14 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { faKey } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faKey,
+  faUserPlus,
+  faUserShield,
+  faBicycle,
+  faFloppyDisk,
+  faXmark,
+  faPenToSquare,
+} from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import type { Seller } from '../../types/seller';
 import type { AdminAccount, CreateUserFormValues } from '../../types/userAccount';
@@ -12,6 +21,7 @@ import Button from '../../components/Button/Button';
 import FormField from '../../components/FormField/FormField';
 import Badge from '../../components/Badge/Badge';
 import Table, { type TableColumn } from '../../components/Table/Table';
+import Modal from '../../components/Modal/Modal';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import ErrorState from '../../components/ErrorState/ErrorState';
 import ConfirmModal from '../../components/Modal/ConfirmModal';
@@ -26,6 +36,23 @@ interface ResetTarget {
   name: string;
 }
 
+interface EditTarget {
+  id: string;
+  name: string;
+  phone: string;
+}
+
+interface FormErrors {
+  name?: string;
+  email?: string;
+}
+
+interface EditFormErrors {
+  name?: string;
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const emptyForm: CreateUserFormValues = {
   role: 'admin',
   name: '',
@@ -38,7 +65,9 @@ const emptyForm: CreateUserFormValues = {
 
 export default function UsersPage() {
   const { showToast } = useToast();
+  const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<CreateUserFormValues>(emptyForm);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
 
@@ -52,6 +81,10 @@ export default function UsersPage() {
 
   const [resetTarget, setResetTarget] = useState<ResetTarget | null>(null);
   const [resetting, setResetting] = useState(false);
+
+  const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
+  const [editErrors, setEditErrors] = useState<EditFormErrors>({});
+  const [editSubmitting, setEditSubmitting] = useState(false);
 
   const loadList = async () => {
     setLoading(true);
@@ -86,8 +119,31 @@ export default function UsersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listRole, page]);
 
+  const openModal = () => {
+    setForm(emptyForm);
+    setErrors({});
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setForm(emptyForm);
+    setErrors({});
+  };
+
+  const validateForm = (): boolean => {
+    const nextErrors: FormErrors = {};
+    if (!form.name.trim()) nextErrors.name = 'Nama wajib diisi.';
+    if (!form.email.trim()) nextErrors.email = 'Email wajib diisi.';
+    else if (!EMAIL_REGEX.test(form.email.trim())) nextErrors.email = 'Format email tidak valid.';
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
+
     setSubmitting(true);
     setTempPassword(null);
 
@@ -112,7 +168,7 @@ export default function UsersPage() {
         // "Reset Password" button on that user's row in the table below.
         showToast('danger', 'Email ini sudah terdaftar. Kalau lupa passwordnya, pakai tombol "Reset Password" di daftar di bawah.');
       }
-      setForm({ ...emptyForm, role: form.role });
+      closeModal();
 
       if (listRole === form.role) {
         await loadList();
@@ -141,6 +197,40 @@ export default function UsersPage() {
     }
   };
 
+  const openEditModal = (target: { id: string; name: string; phone: string | null }) => {
+    setEditTarget({ id: target.id, name: target.name, phone: target.phone ?? '' });
+    setEditErrors({});
+  };
+
+  const closeEditModal = () => {
+    setEditTarget(null);
+    setEditErrors({});
+  };
+
+  const handleEditSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!editTarget) return;
+
+    const nextErrors: EditFormErrors = {};
+    if (!editTarget.name.trim()) nextErrors.name = 'Nama wajib diisi.';
+    setEditErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    setEditSubmitting(true);
+    try {
+      await api.put(`/api/users/${editTarget.id}`, { name: editTarget.name, phone: editTarget.phone || null });
+      showToast('success', 'User berhasil diperbarui.');
+      closeEditModal();
+      await loadList();
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Gagal memperbarui user.';
+      showToast('danger', message);
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
   const adminColumns: TableColumn<AdminAccount>[] = [
     { key: 'name', header: 'Nama', render: (u) => u.name },
     { key: 'email', header: 'Email', render: (u) => u.email },
@@ -150,9 +240,14 @@ export default function UsersPage() {
       key: 'action',
       header: '',
       render: (u) => (
-        <Button size="sm" onClick={() => setResetTarget({ id: u.id, name: u.name })}>
-          Reset Password
-        </Button>
+        <div className={styles.rowActions}>
+          <Button size="sm" icon={<FontAwesomeIcon icon={faPenToSquare} />} onClick={() => openEditModal(u)}>
+            Edit
+          </Button>
+          <Button size="sm" icon={<FontAwesomeIcon icon={faKey} />} onClick={() => setResetTarget({ id: u.id, name: u.name })}>
+            Reset Password
+          </Button>
+        </div>
       ),
     },
   ];
@@ -167,89 +262,51 @@ export default function UsersPage() {
       key: 'action',
       header: '',
       render: (s) => (
-        <Button size="sm" onClick={() => setResetTarget({ id: s.userId, name: s.name })}>
-          Reset Password
-        </Button>
+        <div className={styles.rowActions}>
+          <Button
+            size="sm"
+            icon={<FontAwesomeIcon icon={faPenToSquare} />}
+            onClick={() => openEditModal({ id: s.userId, name: s.name, phone: s.phone })}
+          >
+            Edit
+          </Button>
+          <Button size="sm" icon={<FontAwesomeIcon icon={faKey} />} onClick={() => setResetTarget({ id: s.userId, name: s.name })}>
+            Reset Password
+          </Button>
+        </div>
       ),
     },
   ];
 
   return (
     <div>
-      <PageHeader description="Tambah akun admin atau penjual keliling baru — halaman ini khusus Owner." />
+      <PageHeader
+        description="Tambah akun admin atau penjual keliling baru — halaman ini khusus Owner."
+        actions={
+          <Button variant="primary" icon={<FontAwesomeIcon icon={faUserPlus} />} onClick={openModal}>
+            Tambah User
+          </Button>
+        }
+      />
 
       {tempPassword && <TempPasswordBanner password={tempPassword} />}
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <FormField label="Role" htmlFor="user-role">
-          <select
-            id="user-role"
-            value={form.role}
-            onChange={(e) => setForm({ ...emptyForm, role: e.target.value as 'admin' | 'seller' })}
-          >
-            <option value="admin">Admin</option>
-            <option value="seller">Penjual Keliling</option>
-          </select>
-        </FormField>
-        <FormField label="Nama" htmlFor="user-name">
-          <input id="user-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-        </FormField>
-        <FormField label="Email" htmlFor="user-email">
-          <input
-            id="user-email"
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-          />
-        </FormField>
-        <FormField label="No. HP" htmlFor="user-phone">
-          <input id="user-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-        </FormField>
-
-        {form.role === 'seller' && (
-          <>
-            <FormField label="ID Terminal QRIS BCA" htmlFor="user-qris">
-              <input
-                id="user-qris"
-                value={form.qrisTerminalId}
-                onChange={(e) => setForm({ ...form, qrisTerminalId: e.target.value })}
-              />
-            </FormField>
-            <FormField label="Uang Makan Harian" htmlFor="user-meal">
-              <input
-                id="user-meal"
-                type="number"
-                value={form.dailyMealAllowance}
-                onChange={(e) => setForm({ ...form, dailyMealAllowance: Number(e.target.value) })}
-                min={0}
-              />
-            </FormField>
-            <div className={styles.checkboxField}>
-              <input
-                id="user-active"
-                type="checkbox"
-                checked={form.isActive}
-                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-              />
-              <label htmlFor="user-active">Aktif</label>
-            </div>
-          </>
-        )}
-
-        <div className={styles.actions}>
-          <Button type="submit" variant="primary" disabled={submitting}>
-            {submitting ? 'Menyimpan...' : form.role === 'admin' ? 'Tambah Admin' : 'Tambah Penjual'}
-          </Button>
-        </div>
-      </form>
-
       <h2 className={styles.sectionTitle}>Daftar User</h2>
       <div className={styles.filterRow}>
-        <Button variant={listRole === 'admin' ? 'primary' : 'secondary'} size="sm" onClick={() => setListRole('admin')}>
+        <Button
+          variant={listRole === 'admin' ? 'primary' : 'secondary'}
+          size="sm"
+          icon={<FontAwesomeIcon icon={faUserShield} />}
+          onClick={() => setListRole('admin')}
+        >
           Admin
         </Button>
-        <Button variant={listRole === 'seller' ? 'primary' : 'secondary'} size="sm" onClick={() => setListRole('seller')}>
+        <Button
+          variant={listRole === 'seller' ? 'primary' : 'secondary'}
+          size="sm"
+          icon={<FontAwesomeIcon icon={faBicycle} />}
+          onClick={() => setListRole('seller')}
+        >
           Penjual Keliling
         </Button>
       </div>
@@ -271,6 +328,139 @@ export default function UsersPage() {
       )}
       <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
 
+      {showModal && (
+        <Modal
+          title={form.role === 'admin' ? 'Tambah Admin' : 'Tambah Penjual'}
+          onClose={closeModal}
+          blurBackdrop
+          footer={
+            <>
+              <Button variant="secondary" onClick={closeModal} icon={<FontAwesomeIcon icon={faXmark} />}>
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSubmit}
+                disabled={submitting}
+                icon={<FontAwesomeIcon icon={faFloppyDisk} />}
+              >
+                {submitting ? 'Menyimpan...' : 'Simpan'}
+              </Button>
+            </>
+          }
+        >
+          <form onSubmit={handleSubmit} className={styles.form} noValidate>
+            <FormField label="Role" htmlFor="user-role">
+              <select
+                id="user-role"
+                value={form.role}
+                onChange={(e) => setForm({ ...emptyForm, role: e.target.value as 'admin' | 'seller' })}
+              >
+                <option value="admin">Admin</option>
+                <option value="seller">Penjual Keliling</option>
+              </select>
+            </FormField>
+            <FormField label="Nama" htmlFor="user-name" required error={errors.name}>
+              <input
+                id="user-name"
+                value={form.name}
+                onChange={(e) => {
+                  setForm({ ...form, name: e.target.value });
+                  setErrors((prev) => ({ ...prev, name: undefined }));
+                }}
+              />
+            </FormField>
+            <FormField label="Email" htmlFor="user-email" required error={errors.email}>
+              <input
+                id="user-email"
+                type="email"
+                value={form.email}
+                onChange={(e) => {
+                  setForm({ ...form, email: e.target.value });
+                  setErrors((prev) => ({ ...prev, email: undefined }));
+                }}
+              />
+            </FormField>
+            <FormField label="No. HP" htmlFor="user-phone">
+              <input id="user-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </FormField>
+
+            {form.role === 'seller' && (
+              <>
+                <FormField label="ID Terminal QRIS BCA" htmlFor="user-qris">
+                  <input
+                    id="user-qris"
+                    value={form.qrisTerminalId}
+                    onChange={(e) => setForm({ ...form, qrisTerminalId: e.target.value })}
+                  />
+                </FormField>
+                <FormField label="Uang Makan Harian" htmlFor="user-meal">
+                  <input
+                    id="user-meal"
+                    type="number"
+                    value={form.dailyMealAllowance}
+                    onChange={(e) => setForm({ ...form, dailyMealAllowance: Number(e.target.value) })}
+                    min={0}
+                  />
+                </FormField>
+                <div className={styles.checkboxField}>
+                  <input
+                    id="user-active"
+                    type="checkbox"
+                    checked={form.isActive}
+                    onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                  />
+                  <label htmlFor="user-active">Aktif</label>
+                </div>
+              </>
+            )}
+          </form>
+        </Modal>
+      )}
+
+      {editTarget && (
+        <Modal
+          title="Edit User"
+          onClose={closeEditModal}
+          blurBackdrop
+          footer={
+            <>
+              <Button variant="secondary" onClick={closeEditModal} icon={<FontAwesomeIcon icon={faXmark} />}>
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleEditSubmit}
+                disabled={editSubmitting}
+                icon={<FontAwesomeIcon icon={faFloppyDisk} />}
+              >
+                {editSubmitting ? 'Menyimpan...' : 'Simpan'}
+              </Button>
+            </>
+          }
+        >
+          <form onSubmit={handleEditSubmit} className={styles.form} noValidate>
+            <FormField label="Nama" htmlFor="edit-user-name" required error={editErrors.name}>
+              <input
+                id="edit-user-name"
+                value={editTarget.name}
+                onChange={(e) => {
+                  setEditTarget({ ...editTarget, name: e.target.value });
+                  setEditErrors((prev) => ({ ...prev, name: undefined }));
+                }}
+              />
+            </FormField>
+            <FormField label="No. HP" htmlFor="edit-user-phone">
+              <input
+                id="edit-user-phone"
+                value={editTarget.phone}
+                onChange={(e) => setEditTarget({ ...editTarget, phone: e.target.value })}
+              />
+            </FormField>
+          </form>
+        </Modal>
+      )}
+
       {resetTarget && (
         <ConfirmModal
           title="Reset Password"
@@ -284,6 +474,7 @@ export default function UsersPage() {
       )}
 
       {submitting && <LoadingOverlay message="Menyimpan user baru..." />}
+      {editSubmitting && <LoadingOverlay message="Menyimpan perubahan user..." />}
     </div>
   );
 }
