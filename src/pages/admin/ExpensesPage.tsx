@@ -36,8 +36,8 @@ import { SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
 import styles from './ExpensesPage.module.scss';
 
-const MEAL_ALLOWANCE_CATEGORY = 'uang_makan_penjual';
-const COGS_EXPENSE_CATEGORY = 'bahan_baku';
+const MEAL_ALLOWANCE_CATEGORY = 'Uang Makan Penjual';
+const COGS_EXPENSE_CATEGORY = 'Bahan Baku';
 
 interface FormErrors {
   categoryId?: string;
