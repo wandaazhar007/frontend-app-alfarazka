@@ -25,7 +25,14 @@ import { useToast } from '../../components/Toast/ToastProvider';
 import LoadingOverlay from '../../components/LoadingOverlay/LoadingOverlay';
 import styles from './ProductsPage.module.scss';
 
-const emptyForm: ProductFormValues = { name: '', categoryId: '', unitPrice: '', costPrice: '', isActive: true };
+const emptyForm: ProductFormValues = {
+  name: '',
+  categoryId: '',
+  unitPrice: '',
+  costPrice: '',
+  commissionPerUnit: '',
+  isActive: true,
+};
 const NO_CATEGORY_OPTION = { value: '', label: 'Tanpa kategori' };
 
 interface FormErrors {
@@ -127,6 +134,7 @@ export default function ProductsPage() {
       categoryId: product.categoryId ?? '',
       unitPrice: product.unitPrice,
       costPrice: product.costPrice,
+      commissionPerUnit: product.commissionPerUnit || '',
       isActive: product.isActive,
     });
     setErrors({});
@@ -160,6 +168,7 @@ export default function ProductsPage() {
       categoryId: form.categoryId || null,
       unitPrice: form.unitPrice,
       costPrice: form.costPrice,
+      commissionPerUnit: form.commissionPerUnit === '' ? 0 : form.commissionPerUnit,
       isActive: form.isActive,
     };
 
@@ -321,6 +330,20 @@ export default function ProductsPage() {
                   setForm({ ...form, costPrice: parseRupiahInput(e.target.value) });
                   setErrors((prev) => ({ ...prev, costPrice: undefined }));
                 }}
+              />
+            </FormField>
+            <FormField
+              label="Komisi per Unit"
+              htmlFor="product-commission"
+              help="Opsional — cuma untuk produk yang dapat komisi penjual (mis. Es Sirsak). Kosongkan/Rp. 0 untuk produk roti biasa."
+            >
+              <input
+                id="product-commission"
+                type="text"
+                inputMode="numeric"
+                placeholder="Rp. 0"
+                value={formatInputRupiah(form.commissionPerUnit)}
+                onChange={(e) => setForm({ ...form, commissionPerUnit: parseRupiahInput(e.target.value) })}
               />
             </FormField>
             <div className={styles.checkboxField}>

@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHandHoldingDollar, faXmark, faFloppyDisk, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import type { KelilingStatusResponse, SellerReportRow } from '../../types/dailyReport';
+import type { SellerDebt } from '../../types/sellerDebt';
 import { formatRupiah, formatTanggal } from '../../utils/format';
 import todayJakarta from '../../utils/todayJakarta';
 import PageHeader from '../../components/PageHeader/PageHeader';
@@ -33,6 +34,7 @@ export default function DailySettlementPage() {
   const { showToast } = useToast();
   const [date, setDate] = useState(todayJakarta());
   const [sellers, setSellers] = useState<SellerReportRow[]>([]);
+  const [debtsBySellerId, setDebtsBySellerId] = useState<Record<string, SellerDebt>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [settleTarget, setSettleTarget] = useState<SellerReportRow | null>(null);
@@ -46,8 +48,12 @@ export default function DailySettlementPage() {
     setLoading(true);
     setError(false);
     try {
-      const { data } = await api.get<KelilingStatusResponse>('/api/reports/keliling-status', { params: { date } });
-      setSellers(data.sellers.filter((s) => s.qtyOut > 0));
+      const [reportRes, debtsRes] = await Promise.all([
+        api.get<KelilingStatusResponse>('/api/reports/keliling-status', { params: { date } }),
+        api.get<SellerDebt[]>('/api/seller-debts', { params: { date, source: 'kekurangan_setoran' } }),
+      ]);
+      setSellers(reportRes.data.sellers.filter((s) => s.qtyOut > 0));
+      setDebtsBySellerId(Object.fromEntries(debtsRes.data.map((d) => [d.sellerId, d])));
     } catch {
       setError(true);
     } finally {
@@ -93,6 +99,13 @@ export default function DailySettlementPage() {
           items: [{ sellerId: settleTarget.sellerId, amount: qrisInput || 0 }],
         }),
       ]);
+      // Dipisah dari Promise.all di atas — sengaja dijalankan SETELAH cash/qris
+      // tersimpan, karena kekurangan setoran dihitung dari total keduanya.
+      await api.post('/api/seller-debts/settle', {
+        sellerId: settleTarget.sellerId,
+        date,
+        actualAmount: (cashInput || 0) + (qrisInput || 0),
+      });
       showToast('success', 'Setoran & QRIS berhasil disimpan.');
       closeSettleModal();
       await loadExisting();
@@ -156,6 +169,16 @@ export default function DailySettlementPage() {
       render: (r) => (
         <Badge tone={r.isSettled ? 'success' : 'danger'}>{r.isSettled ? 'Sudah Setoran' : 'Belum Setoran'}</Badge>
       ),
+    },
+    {
+      key: 'debt',
+      header: 'Utang',
+      render: (r) =>
+        debtsBySellerId[r.sellerId] ? (
+          <Badge tone="danger">Kurang {formatRupiah(debtsBySellerId[r.sellerId].outstanding)}</Badge>
+        ) : (
+          '-'
+        ),
     },
     {
       key: 'action',

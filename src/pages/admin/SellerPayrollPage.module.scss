@@ -1,0 +1,59 @@
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.filterRow {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  margin-bottom: $space-4;
+
+  @include respond('tablet') {
+    flex-direction: row;
+
+    > * {
+      flex: 1;
+      max-width: 32rem;
+    }
+  }
+}
+
+.monthInput {
+  height: 4.4rem;
+  width: 100%;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 0 $space-3;
+  @include focus-ring;
+}
+
+.previewHeader {
+  display: flex;
+  gap: $space-2;
+  margin-bottom: $space-4;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $space-3;
+  margin-bottom: $space-4;
+
+  @include respond('tablet') {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond('desktop') {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.actionsRow {
+  display: flex;
+  gap: $space-2;
+  margin-bottom: $space-6;
+}
+
+.sectionTitle {
+  font-size: 1.6rem;
+  margin: $space-5 0 $space-3;
+}

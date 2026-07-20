@@ -31,6 +31,7 @@ export default function SellerDashboard() {
   const { appUser } = useAuth();
   const [todayStock, setTodayStock] = useState<StockMovement[]>([]);
   const [mySales, setMySales] = useState<SellerMySales | null>(null);
+  const [myDebt, setMyDebt] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -62,12 +63,14 @@ export default function SellerDashboard() {
     setLoading(true);
     setError(false);
     try {
-      const [stockRes, salesRes] = await Promise.all([
+      const [stockRes, salesRes, debtRes] = await Promise.all([
         api.get<StockMovement[]>('/api/seller/today-stock'),
         api.get<SellerMySales>('/api/seller/my-sales', { params: { from: fromDate, to: toDate } }),
+        api.get<{ outstanding: number }>('/api/seller/my-debt'),
       ]);
       setTodayStock(stockRes.data);
       setMySales(salesRes.data);
+      setMyDebt(debtRes.data.outstanding);
     } catch {
       setError(true);
     } finally {
@@ -157,6 +160,7 @@ export default function SellerDashboard() {
               <StatCard label="Setoran Cash" value={formatRupiah(mySales.cash)} />
               <StatCard label="Settlement QRIS" value={formatRupiah(mySales.qris)} />
               <StatCard label="Total Penjualan" value={formatRupiah(mySales.totalPenjualan)} variant="highlight" />
+              <StatCard label="Utang Saat Ini" value={formatRupiah(myDebt)} />
             </div>
           )}
 

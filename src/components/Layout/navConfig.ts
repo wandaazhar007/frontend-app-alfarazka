@@ -17,6 +17,8 @@ import {
   faCreditCard,
   faClipboardList,
   faUserPlus,
+  faSackDollar,
+  faMoneyCheckDollar,
 } from '@fortawesome/free-solid-svg-icons';
 import type { Role } from '../../types/auth';
 
@@ -72,6 +74,8 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: 'Pengeluaran', path: '/admin/expenses', icon: faWallet, roles: ['admin'] },
       { label: 'Tutup Buku', path: '/admin/daily-closing', icon: faBookOpen, roles: ['admin'] },
       { label: 'Laporan', path: '/reports/daily', icon: faChartLine, roles: ['admin', 'owner'] },
+      { label: 'Utang Penjual', path: '/seller-debts', icon: faSackDollar, roles: ['admin', 'owner'] },
+      { label: 'Gaji Penjual', path: '/seller-payroll', icon: faMoneyCheckDollar, roles: ['admin', 'owner'] },
     ],
   },
   {

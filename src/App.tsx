@@ -22,6 +22,8 @@ import CustomersPage from './pages/admin/CustomersPage';
 import TokoSalePage from './pages/admin/TokoSalePage';
 import PaketSalePage from './pages/admin/PaketSalePage';
 import ReceivablesPage from './pages/receivables/ReceivablesPage';
+import SellerDebtsPage from './pages/admin/SellerDebtsPage';
+import SellerPayrollPage from './pages/admin/SellerPayrollPage';
 import AuditLogPage from './pages/owner/AuditLogPage';
 import UsersPage from './pages/owner/UsersPage';
 import LicensePage from './pages/LicensePage';
@@ -201,6 +203,22 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin', 'owner']}>
               <ReceivablesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seller-debts"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'owner']}>
+              <SellerDebtsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seller-payroll"
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'owner']}>
+              <SellerPayrollPage />
             </ProtectedRoute>
           }
         />

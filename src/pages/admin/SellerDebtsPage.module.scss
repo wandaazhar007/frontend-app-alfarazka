@@ -1,0 +1,74 @@
+@use 'sass:color';
+@use '@/styles/variables' as *;
+@use '@/styles/mixins' as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.filterRow {
+  margin-bottom: $space-4;
+}
+
+.filterSelect {
+  height: 4rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: 0 $space-3;
+  @include focus-ring;
+}
+
+.paymentForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  align-items: center;
+}
+
+.amountField {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.amountInput {
+  width: 13rem;
+  height: 3.6rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 0 $space-2;
+  @include tabular-nums;
+  @include focus-ring;
+}
+
+.amountInputError {
+  border-color: $color-danger;
+}
+
+.fieldErrorText {
+  font-size: 1.2rem;
+  color: $color-danger;
+}
+
+.methodSelect {
+  height: 3.6rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 0 $space-2;
+  @include focus-ring;
+}
+
+// Tetap ada di DOM utk screen reader (tombol Simpan/Batal jadi icon-only secara visual).
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
