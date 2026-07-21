@@ -41,3 +41,16 @@ Description: This SCSS file defines the styles for the DailyReportPage in a fron
   color: $color-warning;
   margin-bottom: $space-3;
 }
+
+// Subtle vertical rules between columns, only for the seller table (per-column
+// figures — Roti Keluar/Retur/Terjual/dll — are easier to scan with a divider).
+.sellerTable {
+  :global(th),
+  :global(td) {
+    border-left: 1px solid $color-border;
+
+    &:first-child {
+      border-left: none;
+    }
+  }
+}

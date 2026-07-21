@@ -254,7 +254,9 @@ export default function ProductsPage() {
       ) : products.length === 0 ? (
         <EmptyState message={debouncedSearch ? 'Tidak ada produk dengan nama tersebut.' : 'Belum ada produk.'} />
       ) : (
-        <Table columns={columns} data={products} rowKey={(p) => p.id} />
+        <div className={styles.productsTable}>
+          <Table columns={columns} data={products} rowKey={(p) => p.id} />
+        </div>
       )}
       <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
 

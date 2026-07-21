@@ -43,6 +43,7 @@ export default function DailySettlementPage() {
   const [saving, setSaving] = useState(false);
   const [showFieldError, setShowFieldError] = useState(false);
   const [pendingConfirmMissing, setPendingConfirmMissing] = useState<'cash' | 'qris' | null>(null);
+  const [expectedAmount, setExpectedAmount] = useState<number | null>(null);
 
   const loadExisting = async () => {
     setLoading(true);
@@ -72,6 +73,14 @@ export default function DailySettlementPage() {
     setQrisInput(row.qris > 0 ? row.qris : '');
     setShowFieldError(false);
     setPendingConfirmMissing(null);
+    setExpectedAmount(null);
+
+    api
+      .get<{ expectedAmount: number }>('/api/seller-debts/expected', { params: { sellerId: row.sellerId, date } })
+      .then(({ data }) => setExpectedAmount(data.expectedAmount))
+      .catch(() => {
+        /* Badge target setoran cukup diam2 tidak muncul kalau gagal dimuat */
+      });
   };
 
   const closeSettleModal = () => {
@@ -80,6 +89,7 @@ export default function DailySettlementPage() {
     setQrisInput('');
     setShowFieldError(false);
     setPendingConfirmMissing(null);
+    setExpectedAmount(null);
   };
 
   const doSaveSettle = async () => {
@@ -116,8 +126,10 @@ export default function DailySettlementPage() {
     }
   };
 
+  const isOverExpected = expectedAmount !== null && (cashInput || 0) + (qrisInput || 0) > expectedAmount;
+
   const handleSaveSettle = () => {
-    if (!settleTarget) return;
+    if (!settleTarget || isOverExpected) return;
 
     const isCashFilled = typeof cashInput === 'number' && cashInput > 0;
     const isQrisFilled = typeof qrisInput === 'number' && qrisInput > 0;
@@ -232,7 +244,7 @@ export default function DailySettlementPage() {
               <Button
                 variant="primary"
                 onClick={handleSaveSettle}
-                disabled={saving}
+                disabled={saving || isOverExpected}
                 icon={<FontAwesomeIcon icon={faFloppyDisk} />}
               >
                 {saving ? 'Menyimpan...' : 'Simpan'}
@@ -241,12 +253,18 @@ export default function DailySettlementPage() {
           }
         >
           <div className={styles.modalDateBadge}>
-            <Badge tone="danger">{formatTanggal(date, 'panjang')}</Badge>
+            <Badge tone="success">{formatTanggal(date, 'panjang')}</Badge>
           </div>
           <FormField
             label="Setoran Cash"
             htmlFor="settle-cash"
-            error={showFieldError ? 'Salah satu field wajib diisi' : undefined}
+            error={
+              showFieldError
+                ? 'Salah satu field wajib diisi'
+                : isOverExpected
+                  ? 'Total setoran melebihi total penjualan yang harus disetor'
+                  : undefined
+            }
           >
             <input
               id="settle-cash"
@@ -264,7 +282,13 @@ export default function DailySettlementPage() {
           <FormField
             label="Settlement QRIS"
             htmlFor="settle-qris"
-            error={showFieldError ? 'Salah satu field wajib diisi' : undefined}
+            error={
+              showFieldError
+                ? 'Salah satu field wajib diisi'
+                : isOverExpected
+                  ? 'Total setoran melebihi total penjualan yang harus disetor'
+                  : undefined
+            }
           >
             <input
               id="settle-qris"
@@ -279,6 +303,17 @@ export default function DailySettlementPage() {
               }}
             />
           </FormField>
+
+          {expectedAmount !== null && (
+            <div className={styles.settleBadgeRow}>
+              <Badge tone="danger">Total uang penjualan yang harus di setor: {formatRupiah(expectedAmount)}</Badge>
+              {expectedAmount - (cashInput || 0) - (qrisInput || 0) > 0 && (
+                <Badge tone="danger">
+                  Total minus hari ini {formatRupiah(expectedAmount - (cashInput || 0) - (qrisInput || 0))}
+                </Badge>
+              )}
+            </div>
+          )}
         </Modal>
       )}
 

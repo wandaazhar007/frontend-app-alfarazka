@@ -60,6 +60,16 @@ Description: This SCSS file defines the styles for the StockMorningPage in a fro
   }
 }
 
+.cartTotals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+
+  @include respond('tablet') {
+    grid-column: span 3;
+  }
+}
+
 .actions {
   display: flex;
   gap: $space-2;
@@ -67,6 +77,16 @@ Description: This SCSS file defines the styles for the StockMorningPage in a fro
   @include respond('tablet') {
     grid-column: span 3;
   }
+}
+
+.mealModalHint {
+  font-size: 1.3rem;
+  color: $color-text-muted;
+  margin-bottom: $space-4;
+}
+
+.mealModalBadge {
+  margin-bottom: $space-4;
 }
 
 .rowActions {

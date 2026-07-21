@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalculator, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCalculator, faCheck, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-import { formatRupiah } from '../../utils/format';
+import { formatRupiah, formatTanggal } from '../../utils/format';
+import todayJakarta from '../../utils/todayJakarta';
 import type { Seller } from '../../types/seller';
 import type { Paginated } from '../../types/pagination';
 import type { PayrollClosing, PayrollPreview } from '../../types/sellerPayroll';
@@ -21,6 +22,7 @@ import ErrorState from '../../components/ErrorState/ErrorState';
 import { SkeletonStatCardRow, SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
 import LoadingOverlay from '../../components/LoadingOverlay/LoadingOverlay';
+import Modal from '../../components/Modal/Modal';
 import styles from './SellerPayrollPage.module.scss';
 
 function currentPeriodMonth(): string {
@@ -47,6 +49,7 @@ export default function SellerPayrollPage() {
   const [existingClosing, setExistingClosing] = useState<PayrollClosing | null>(null);
   const [generating, setGenerating] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [showEarlyPayWarning, setShowEarlyPayWarning] = useState(false);
 
   const [history, setHistory] = useState<PayrollClosing[]>([]);
   const [historyTotal, setHistoryTotal] = useState(0);
@@ -138,8 +141,21 @@ export default function SellerPayrollPage() {
     }
   };
 
+  // Gaji seharusnya dibayar tanggal 1 (dikonfirmasi user) — kalau admin klik "Bayar
+  // Sekarang" sebelum tanggal itu, ingatkan dulu lewat modal supaya tidak ke-klik
+  // tidak sengaja sebelum waktunya.
+  const handleConfirmClick = () => {
+    const dayOfMonth = Number(todayJakarta().split('-')[2]);
+    if (dayOfMonth !== 1) {
+      setShowEarlyPayWarning(true);
+      return;
+    }
+    handleConfirm();
+  };
+
   const handleConfirm = async () => {
     if (!existingClosing) return;
+    setShowEarlyPayWarning(false);
     setConfirming(true);
     try {
       const { data } = await api.post<PayrollClosing>(`/api/seller-payroll/${existingClosing.id}/confirm`);
@@ -154,6 +170,8 @@ export default function SellerPayrollPage() {
       setConfirming(false);
     }
   };
+
+  const selectedSellerName = sellers.find((s) => s.id === sellerId)?.name ?? '';
 
   const historyColumns: TableColumn<PayrollClosing>[] = [
     { key: 'seller', header: 'Penjual', render: (c) => c.sellerName },
@@ -214,13 +232,22 @@ export default function SellerPayrollPage() {
             <StatCard label="Net Payout" value={formatRupiah(preview.netPayout)} variant="highlight" />
           </div>
 
+          {preview.unsettledDate && (
+            <div className={styles.unsettledWarning}>
+              <Badge tone="danger">
+                {selectedSellerName} belum melakukan setoran pada tanggal {formatTanggal(preview.unsettledDate, 'pendek')}
+              </Badge>
+            </div>
+          )}
+
           {appUser?.role === 'admin' && existingClosing?.status !== 'paid' && (
             <div className={styles.actionsRow}>
               <Button
                 variant="secondary"
                 icon={<FontAwesomeIcon icon={faCalculator} />}
                 onClick={handleGenerate}
-                disabled={generating}
+                disabled={generating || !!preview.unsettledDate}
+                title={preview.unsettledDate ? 'Tidak bisa generate — masih ada setoran yang belum diinput' : undefined}
               >
                 {generating ? 'Menghitung...' : existingClosing ? 'Hitung Ulang (Draft)' : 'Generate (Draft)'}
               </Button>
@@ -228,10 +255,10 @@ export default function SellerPayrollPage() {
                 <Button
                   variant="primary"
                   icon={<FontAwesomeIcon icon={faCheck} />}
-                  onClick={handleConfirm}
+                  onClick={handleConfirmClick}
                   disabled={confirming}
                 >
-                  {confirming ? 'Memproses...' : 'Konfirmasi Bayar'}
+                  {confirming ? 'Memproses...' : 'Bayar Sekarang'}
                 </Button>
               )}
             </div>
@@ -247,9 +274,31 @@ export default function SellerPayrollPage() {
       ) : history.length === 0 ? (
         <EmptyState message="Belum ada riwayat gaji bulanan." />
       ) : (
-        <Table columns={historyColumns} data={history} rowKey={(c) => c.id} />
+        <div className={styles.historyTable}>
+          <Table columns={historyColumns} data={history} rowKey={(c) => c.id} />
+        </div>
       )}
       <Pagination page={historyPage} pageSize={PAGE_SIZE} total={historyTotal} onPageChange={setHistoryPage} />
+
+      {showEarlyPayWarning && (
+        <Modal
+          title="Perhatian"
+          icon={<FontAwesomeIcon icon={faTriangleExclamation} className={styles.warningIcon} />}
+          onClose={() => setShowEarlyPayWarning(false)}
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setShowEarlyPayWarning(false)}>
+                Batal
+              </Button>
+              <Button variant="primary" onClick={handleConfirm}>
+                Ya
+              </Button>
+            </>
+          }
+        >
+          <p>Gaji bulanan biasanya dibayarkan tanggal 1. Yakin ingin membayar sekarang?</p>
+        </Modal>
+      )}
 
       {(generating || confirming) && (
         <LoadingOverlay message={confirming ? 'Memproses pembayaran...' : 'Menghitung gaji bulanan...'} />

@@ -12,6 +12,8 @@ export interface PayrollPreview {
   debtDeduction: number;
   netPayout: number;
   dailyBreakdown: PayrollDailyBreakdown[];
+  /** Tanggal paling awal dalam periode dimana penjual bawa stok tapi belum setoran cash/QRIS — null kalau semua sudah setoran. */
+  unsettledDate: string | null;
 }
 
 export type PayrollClosingStatus = 'draft' | 'paid';

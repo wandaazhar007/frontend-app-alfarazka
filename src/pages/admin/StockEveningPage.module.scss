@@ -83,3 +83,24 @@ Description: This SCSS file defines the styles for the StockEveningPage in a fro
   color: $color-success;
   font-weight: 600;
 }
+
+.soldPlaceholder {
+  color: $color-text-soft;
+}
+
+.previewBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  margin-top: $space-4;
+}
+
+.setorBadgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: $space-2;
+  margin-top: $space-3;
+  padding-top: $space-3;
+  border-top: 2px solid $color-text-soft;
+}

@@ -268,7 +268,9 @@ export default function SellerDebtsPage() {
       ) : debts.length === 0 ? (
         <EmptyState message="Tidak ada utang penjual untuk filter ini." />
       ) : (
-        <Table columns={columns} data={debts} rowKey={(d) => d.id} />
+        <div className={styles.debtsTable}>
+          <Table columns={columns} data={debts} rowKey={(d) => d.id} />
+        </div>
       )}
       <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
 

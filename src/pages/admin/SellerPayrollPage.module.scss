@@ -47,6 +47,10 @@
   }
 }
 
+.unsettledWarning {
+  margin-bottom: $space-4;
+}
+
 .actionsRow {
   display: flex;
   gap: $space-2;
@@ -56,4 +60,20 @@
 .sectionTitle {
   font-size: 1.6rem;
   margin: $space-5 0 $space-3;
+}
+
+.warningIcon {
+  color: $color-warning;
+}
+
+// Garis vertikal tipis antar kolom, sama seperti tabel di halaman Laporan & Utang Penjual.
+.historyTable {
+  :global(th),
+  :global(td) {
+    border-left: 1px solid $color-border;
+
+    &:first-child {
+      border-left: none;
+    }
+  }
 }

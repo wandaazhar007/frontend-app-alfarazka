@@ -10,14 +10,16 @@ import {
   faCheck,
   faCircleCheck,
   faTriangleExclamation,
+  faUtensils,
 } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import type { Seller } from '../../types/seller';
 import type { Product } from '../../types/product';
 import type { StockMovement } from '../../types/stockMovement';
 import type { KelilingStatusResponse } from '../../types/dailyReport';
+import type { ExpenseCategory } from '../../types/expense';
 import todayJakarta from '../../utils/todayJakarta';
-import { formatTanggal } from '../../utils/format';
+import { formatTanggal, formatInputRupiah, parseRupiahInput } from '../../utils/format';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import Button from '../../components/Button/Button';
 import Badge from '../../components/Badge/Badge';
@@ -55,6 +57,7 @@ interface PersistedForm {
 }
 
 const FORM_STORAGE_KEY = 'stock-morning-form';
+const MEAL_ALLOWANCE_CATEGORY = 'Uang Makan Penjual';
 
 function loadStoredForm(): PersistedForm | null {
   try {
@@ -88,9 +91,14 @@ export default function StockMorningPage() {
   const [originalProductIds, setOriginalProductIds] = useState<string[]>(() => loadStoredForm()?.originalProductIds ?? []);
   const [selectedProductId, setSelectedProductId] = useState(() => loadStoredForm()?.selectedProductId ?? '');
   const [cartQty, setCartQty] = useState<number | ''>(() => loadStoredForm()?.cartQty ?? '');
-  const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ sellerId: string; sellerName: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
+  const [mealModalSeller, setMealModalSeller] = useState<{ id: string; name: string } | null>(null);
+  const [mealAmount, setMealAmount] = useState<number | ''>('');
+  const [mealError, setMealError] = useState<string | undefined>();
+  const [mealSubmitting, setMealSubmitting] = useState(false);
 
   useEffect(() => {
     const payload: PersistedForm = { date, formSellerId, cart, originalProductIds, selectedProductId, cartQty };
@@ -100,12 +108,14 @@ export default function StockMorningPage() {
   const loadMeta = async () => {
     setLoadingMeta(true);
     try {
-      const [sellersRes, productsRes] = await Promise.all([
+      const [sellersRes, productsRes, categoriesRes] = await Promise.all([
         api.get<Seller[]>('/api/sellers'),
         api.get<Product[]>('/api/products'),
+        api.get<ExpenseCategory[]>('/api/expense-categories'),
       ]);
       setSellers(sellersRes.data.filter((s) => s.isActive));
       setProducts(productsRes.data.filter((p) => p.isActive));
+      setCategories(categoriesRes.data);
     } catch {
       setError(true);
     } finally {
@@ -168,6 +178,18 @@ export default function StockMorningPage() {
     [products, cart]
   );
 
+  // Terpisah dari qty produk komisi (mis. Es Sirsak) — pola sama seperti roti_qty vs
+  // commission_amount di SellerPayrollService, supaya badge tidak "tampil kosong"
+  // saat keranjang cuma isi salah satu jenis produk.
+  const cartNonCommissionQty = cart.reduce((sum, c) => {
+    const product = products.find((p) => p.id === c.productId);
+    return product && product.commissionPerUnit > 0 ? sum : sum + c.qtyOut;
+  }, 0);
+  const cartCommissionQty = cart.reduce((sum, c) => {
+    const product = products.find((p) => p.id === c.productId);
+    return product && product.commissionPerUnit > 0 ? sum + c.qtyOut : sum;
+  }, 0);
+
   const openPicker = () => {
     if (date !== todayJakarta()) {
       setShowDateRestrictionModal(true);
@@ -218,7 +240,10 @@ export default function StockMorningPage() {
     setCart((prev) => prev.filter((c) => c.productId !== productId));
   };
 
-  const handleSubmitForm = async () => {
+  // Klik "Simpan" pada form cart TIDAK langsung menyimpan stok pagi — modal Uang
+  // Makan Penjual dibuka dulu, dan stok pagi baru benar-benar disimpan setelah
+  // modal itu berhasil disimpan (lihat handleSaveMealAllowance).
+  const handleSubmitForm = () => {
     if (!formSellerId) return;
 
     if (cart.length === 0 && originalProductIds.length === 0) {
@@ -226,7 +251,31 @@ export default function StockMorningPage() {
       return;
     }
 
-    setSubmitting(true);
+    const seller = sellers.find((s) => s.id === formSellerId);
+    setMealAmount(seller ? seller.dailyMealAllowance : '');
+    setMealError(undefined);
+    setMealModalSeller({ id: formSellerId, name: formSellerName ?? '' });
+  };
+
+  const mealCategory = categories.find((c) => c.name === MEAL_ALLOWANCE_CATEGORY);
+
+  // Cancel = batalkan seluruh aksi simpan (uang makan MAUPUN stok pagi) — form
+  // cart tetap terbuka apa adanya supaya admin bisa lanjut edit atau coba lagi.
+  const closeMealModal = () => {
+    setMealModalSeller(null);
+  };
+
+  const handleSaveMealAllowance = async () => {
+    if (!mealModalSeller || !formSellerId) return;
+
+    if (!mealCategory) {
+      showToast('danger', `Kategori '${MEAL_ALLOWANCE_CATEGORY}' tidak ditemukan.`);
+      return;
+    }
+    if (mealAmount === '' || mealAmount <= 0) {
+      setMealError('Nominal wajib diisi dan harus lebih dari 0.');
+      return;
+    }
 
     const cartProductIds = new Set(cart.map((c) => c.productId));
     const removedItems = originalProductIds
@@ -238,15 +287,23 @@ export default function StockMorningPage() {
       ...removedItems,
     ];
 
+    setMealSubmitting(true);
     try {
+      await api.post('/api/expenses', {
+        categoryId: mealCategory.id,
+        amount: mealAmount,
+        description: `Uang makan - ${mealModalSeller.name}`,
+        expenseDate: date,
+      });
       await api.post('/api/stock-movements', { movementDate: date, items });
-      showToast('success', 'Stok pagi berhasil disimpan.');
+      showToast('success', `Uang makan & stok pagi ${mealModalSeller.name} berhasil disimpan.`);
+      closeMealModal();
       cancelForm();
       await loadMovements();
     } catch {
-      showToast('danger', 'Gagal menyimpan stok pagi.');
+      showToast('danger', 'Gagal menyimpan uang makan/stok pagi.');
     } finally {
-      setSubmitting(false);
+      setMealSubmitting(false);
     }
   };
 
@@ -430,16 +487,18 @@ export default function StockMorningPage() {
             />
           )}
 
+          {(cartNonCommissionQty > 0 || cartCommissionQty > 0) && (
+            <div className={styles.cartTotals}>
+              {cartNonCommissionQty > 0 && <Badge tone="success">Total Produk Dibawa: {cartNonCommissionQty} pcs</Badge>}
+              {cartCommissionQty > 0 && <Badge tone="success">Total Produk Komisi Dibawa: {cartCommissionQty} pcs</Badge>}
+            </div>
+          )}
+
           <div className={styles.actions}>
-            <Button
-              variant="primary"
-              onClick={handleSubmitForm}
-              disabled={submitting}
-              icon={<FontAwesomeIcon icon={faFloppyDisk} />}
-            >
-              {submitting ? 'Menyimpan...' : 'Simpan'}
+            <Button variant="primary" onClick={handleSubmitForm} icon={<FontAwesomeIcon icon={faFloppyDisk} />}>
+              Simpan
             </Button>
-            <Button variant="secondary" onClick={cancelForm} disabled={submitting} icon={<FontAwesomeIcon icon={faXmark} />}>
+            <Button variant="secondary" onClick={cancelForm} icon={<FontAwesomeIcon icon={faXmark} />}>
               Batal
             </Button>
           </div>
@@ -502,6 +561,53 @@ export default function StockMorningPage() {
         </Modal>
       )}
 
+      {mealModalSeller && (
+        <Modal
+          title="Uang Makan Penjual"
+          icon={<FontAwesomeIcon icon={faUtensils} />}
+          onClose={closeMealModal}
+          blurBackdrop
+          footer={
+            <>
+              <Button variant="secondary" onClick={closeMealModal} disabled={mealSubmitting} icon={<FontAwesomeIcon icon={faXmark} />}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSaveMealAllowance}
+                disabled={mealSubmitting}
+                icon={<FontAwesomeIcon icon={faFloppyDisk} />}
+              >
+                {mealSubmitting ? 'Menyimpan...' : 'Simpan'}
+              </Button>
+            </>
+          }
+        >
+          <p className={styles.mealModalHint}>
+            Isi uang makan untuk penjual ini terlebih dahulu — stok pagi akan ikut tersimpan setelah uang makan berhasil
+            disimpan.
+          </p>
+          <div className={styles.mealModalBadge}>
+            <Badge tone="success">
+              {mealModalSeller.name} — {formatTanggal(date, 'dash')}
+            </Badge>
+          </div>
+          <FormField label="Nominal" htmlFor="meal-amount" required error={mealError}>
+            <input
+              id="meal-amount"
+              type="text"
+              inputMode="numeric"
+              placeholder="Rp. 0"
+              value={formatInputRupiah(mealAmount)}
+              onChange={(e) => {
+                setMealAmount(parseRupiahInput(e.target.value));
+                setMealError(undefined);
+              }}
+            />
+          </FormField>
+        </Modal>
+      )}
+
       {deleteTarget && (
         <ConfirmModal
           title="Hapus Stok Pagi"
@@ -512,7 +618,7 @@ export default function StockMorningPage() {
         />
       )}
 
-      {submitting && <LoadingOverlay message="Menyimpan stok pagi..." />}
+      {mealSubmitting && <LoadingOverlay message="Menyimpan uang makan & stok pagi..." />}
     </div>
   );
 }

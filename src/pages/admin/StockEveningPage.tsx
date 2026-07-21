@@ -11,9 +11,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import type { StockMovement } from '../../types/stockMovement';
+import type { Product } from '../../types/product';
 import type { KelilingStatusResponse } from '../../types/dailyReport';
 import todayJakarta from '../../utils/todayJakarta';
-import { formatTanggal } from '../../utils/format';
+import { formatTanggal, formatRupiah } from '../../utils/format';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import Button from '../../components/Button/Button';
 import Badge from '../../components/Badge/Badge';
@@ -32,11 +33,29 @@ interface SellerRow {
   byProduct: Record<string, StockMovement>;
 }
 
+// Tabel tier gaji harian — harus sama dengan TIER_TABLE di
+// backend/src/services/SellerPayrollService.js (batas atas inklusif). Dipakai
+// di sini HANYA untuk preview live di modal retur, bukan sumber kebenaran gaji
+// (yang tetap dihitung backend saat generate payroll bulanan).
+const TIER_TABLE = [
+  { max: 200, salary: 30000 },
+  { max: 300, salary: 35000 },
+  { max: 400, salary: 40000 },
+  { max: 500, salary: 50000 },
+  { max: Infinity, salary: 50000 },
+];
+
+function computeTierSalary(qtySold: number): number {
+  const tier = TIER_TABLE.find((t) => qtySold <= t.max);
+  return tier ? tier.salary : 0;
+}
+
 export default function StockEveningPage() {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [date, setDate] = useState(todayJakarta());
   const [movements, setMovements] = useState<StockMovement[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [settlementMap, setSettlementMap] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -67,6 +86,15 @@ export default function StockEveningPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date]);
 
+  useEffect(() => {
+    api
+      .get<Product[]>('/api/products')
+      .then(({ data }) => setProducts(data))
+      .catch(() => {
+        /* Preview badge di modal retur cukup diam2 tidak muncul kalau produk gagal dimuat */
+      });
+  }, []);
+
   const tableRows = useMemo<SellerRow[]>(() => {
     const sellerIds = [...new Set(movements.map((m) => m.sellerId))];
     return sellerIds.map((sellerId) => {
@@ -93,6 +121,36 @@ export default function StockEveningPage() {
         return typeof val === 'number' && val > m.qtyOut;
       })
     : false;
+
+  const hasAnyReturnInput = Object.values(returnQtyMap).some((v) => typeof v === 'number');
+
+  // Cuma menjumlahkan produk yang qty retur-nya SUDAH diinput (sejalan dengan kolom
+  // "Terjual" yang juga cuma tampil per baris kalau sudah diinput) — jadi ini preview
+  // live berdasarkan progres input saat itu, bukan menunggu semua baris terisi.
+  const enteredSoldItems = returnRow
+    ? Object.values(returnRow.byProduct)
+        .filter((m) => typeof returnQtyMap[m.productId] === 'number')
+        .map((m) => {
+          const product = products.find((p) => p.id === m.productId);
+          const qtySold = m.qtyOut - (returnQtyMap[m.productId] as number);
+          return { qtySold, commissionPerUnit: product?.commissionPerUnit ?? 0, unitPrice: product?.unitPrice ?? 0 };
+        })
+    : [];
+
+  const totalTerjual = enteredSoldItems
+    .filter((i) => i.commissionPerUnit === 0)
+    .reduce((sum, i) => sum + i.qtySold, 0);
+  const totalTerjualKomisi = enteredSoldItems
+    .filter((i) => i.commissionPerUnit > 0)
+    .reduce((sum, i) => sum + i.qtySold, 0);
+  const gajiHariItu = computeTierSalary(totalTerjual);
+  const komisiHariItu = enteredSoldItems
+    .filter((i) => i.commissionPerUnit > 0)
+    .reduce((sum, i) => sum + i.qtySold * i.commissionPerUnit, 0);
+  // Uang yang harus disetor = qty terjual x harga jual, SEMUA produk (komisi tetap
+  // dijual dengan harga normal — komisi adalah bonus tambahan utk penjual, bukan
+  // potongan harga jual), bukan cuma produk non-komisi.
+  const totalUangSetor = enteredSoldItems.reduce((sum, i) => sum + i.qtySold * i.unitPrice, 0);
 
   const openReturnModal = (row: SellerRow) => {
     setReturnTarget(row.sellerId);
@@ -277,16 +335,35 @@ export default function StockEveningPage() {
                 key: 'sold',
                 header: 'Terjual',
                 align: 'right',
-                render: (m) => (
-                  <span className={styles.soldValue}>
-                    {m.qtyOut - (returnQtyMap[m.productId] || 0)} <FontAwesomeIcon icon={faCheck} />
-                  </span>
-                ),
+                render: (m) =>
+                  typeof returnQtyMap[m.productId] === 'number' ? (
+                    <span className={styles.soldValue}>
+                      {m.qtyOut - (returnQtyMap[m.productId] as number)} <FontAwesomeIcon icon={faCheck} />
+                    </span>
+                  ) : (
+                    <span className={styles.soldPlaceholder}>—</span>
+                  ),
               },
             ]}
             data={Object.values(returnRow.byProduct)}
             rowKey={(m) => m.id}
           />
+
+          {hasAnyReturnInput && (
+            <div className={styles.previewBadges}>
+              <Badge tone="success">Total Produk Terjual: {totalTerjual} pcs</Badge>
+              <Badge tone="success">Total Produk Komisi Terjual: {totalTerjualKomisi} pcs</Badge>
+              <Badge tone="success">Gaji Hari Ini: {formatRupiah(gajiHariItu)}</Badge>
+              <Badge tone="success">Komisi Hari Ini: {formatRupiah(komisiHariItu)}</Badge>
+            </div>
+          )}
+          {hasAnyReturnInput && (
+            <div className={styles.setorBadgeRow}>
+              <Badge tone="danger">
+                Jumlah uang yang harus di setor {returnRow.sellerName} {formatRupiah(totalUangSetor)}
+              </Badge>
+            </div>
+          )}
         </Modal>
       )}
 

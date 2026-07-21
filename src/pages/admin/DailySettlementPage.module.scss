@@ -43,6 +43,13 @@ Description: This SCSS file defines the styles for the DailySettlementPage in a 
   margin-bottom: $space-2;
 }
 
+.settleBadgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  margin-top: $space-4;
+}
+
 .resettlementRow {
   background: rgba(220, 38, 38, 0.08);
 }

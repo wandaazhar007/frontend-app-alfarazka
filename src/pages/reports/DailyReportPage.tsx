@@ -142,11 +142,14 @@ export default function DailyReportPage() {
               <StatCard label="Roti Keluar" value={String(report.summary.totalQtyOut)} />
               <StatCard label="Roti Retur" value={String(report.summary.totalQtyReturned)} />
               <StatCard label="Roti Terjual" value={String(report.summary.totalQtySold)} />
+              <StatCard label="Produk Komisi Terjual" value={String(report.summary.totalKomisiQtySold)} />
             </div>
             {report.keliling.sellers.length === 0 ? (
               <EmptyState message="Tidak ada data penjualan keliling." />
             ) : (
-              <Table columns={kelilingColumns} data={report.keliling.sellers} rowKey={(s) => s.sellerId} />
+              <div className={styles.sellerTable}>
+                <Table columns={kelilingColumns} data={report.keliling.sellers} rowKey={(s) => s.sellerId} />
+              </div>
             )}
           </div>
 

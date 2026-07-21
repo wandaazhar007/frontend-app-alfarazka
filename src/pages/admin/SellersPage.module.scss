@@ -24,3 +24,15 @@ Description: This SCSS file defines the styles for the SellersPage in a frontend
   display: flex;
   gap: $space-2;
 }
+
+// Garis vertikal tipis antar kolom, sama seperti tabel di halaman Laporan/Utang Penjual/Gaji Penjual.
+.sellersTable {
+  :global(th),
+  :global(td) {
+    border-left: 1px solid $color-border;
+
+    &:first-child {
+      border-left: none;
+    }
+  }
+}

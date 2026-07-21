@@ -246,7 +246,9 @@ export default function SellersPage() {
       ) : sellers.length === 0 ? (
         <EmptyState message={debouncedSearch ? 'Tidak ada penjual dengan nama tersebut.' : 'Belum ada penjual.'} />
       ) : (
-        <Table columns={columns} data={sellers} rowKey={(s) => s.id} />
+        <div className={styles.sellersTable}>
+          <Table columns={columns} data={sellers} rowKey={(s) => s.id} />
+        </div>
       )}
       <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
 

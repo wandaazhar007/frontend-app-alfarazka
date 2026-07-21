@@ -60,6 +60,18 @@
   @include focus-ring;
 }
 
+// Garis vertikal tipis antar kolom, sama seperti tabel penjual di halaman Laporan.
+.debtsTable {
+  :global(th),
+  :global(td) {
+    border-left: 1px solid $color-border;
+
+    &:first-child {
+      border-left: none;
+    }
+  }
+}
+
 // Tetap ada di DOM utk screen reader (tombol Simpan/Batal jadi icon-only secara visual).
 .srOnly {
   position: absolute;

@@ -19,6 +19,8 @@ export interface KelilingSummary {
   totalQtyOut: number;
   totalQtyReturned: number;
   totalQtySold: number;
+  /** Qty terjual produk komisi (commission_per_unit > 0, mis. Es Sirsak) — TIDAK termasuk dalam totalQtySold. */
+  totalKomisiQtySold: number;
 }
 
 // Response dari GET /api/reports/keliling-status — versi ringan dari DailyReport,
@@ -81,6 +83,7 @@ export interface DailyReportSummary {
   totalQtyOut: number;
   totalQtyReturned: number;
   totalQtySold: number;
+  totalKomisiQtySold: number;
 }
 
 export interface DailyReport {
