@@ -255,7 +255,14 @@ export default function StockEveningPage() {
       <h1 className={styles.dateHeading}>{formatTanggal(date, 'panjang')}</h1>
       <PageHeader
         description="Catat retur roti sore ini dari tiap penjual — roti terjual otomatis dihitung dari selisihnya."
-        actions={<input type="date" className={styles.dateInput} value={date} onChange={(e) => setDate(e.target.value)} />}
+        actions={
+          <input
+            type="date"
+            className={styles.dateInput}
+            value={date}
+            onChange={(e) => e.target.value && setDate(e.target.value)}
+          />
+        }
       />
 
       {loading ? (
@@ -316,7 +323,6 @@ export default function StockEveningPage() {
                     type="number"
                     min={0}
                     max={m.qtyOut}
-                    placeholder="0"
                     className={styles.qtyInput}
                     value={returnQtyMap[m.productId] ?? ''}
                     onChange={(e) => {

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalculator, faCheck, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faCalculator, faCheck, faTriangleExclamation, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatRupiah, formatTanggal } from '../../utils/format';
 import todayJakarta from '../../utils/todayJakarta';
+import downloadPayrollSlip from '../../utils/downloadPayrollSlip';
 import type { Seller } from '../../types/seller';
 import type { Paginated } from '../../types/pagination';
 import type { PayrollClosing, PayrollPreview } from '../../types/sellerPayroll';
@@ -50,6 +51,7 @@ export default function SellerPayrollPage() {
   const [generating, setGenerating] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [showEarlyPayWarning, setShowEarlyPayWarning] = useState(false);
+  const [exportingSlip, setExportingSlip] = useState(false);
 
   const [history, setHistory] = useState<PayrollClosing[]>([]);
   const [historyTotal, setHistoryTotal] = useState(0);
@@ -171,6 +173,18 @@ export default function SellerPayrollPage() {
     }
   };
 
+  const handleExportSlip = async () => {
+    if (!sellerId) return;
+    setExportingSlip(true);
+    try {
+      await downloadPayrollSlip(sellerId, selectedSellerName, periodMonth);
+    } catch {
+      showToast('danger', 'Gagal export slip gaji.');
+    } finally {
+      setExportingSlip(false);
+    }
+  };
+
   const selectedSellerName = sellers.find((s) => s.id === sellerId)?.name ?? '';
 
   const historyColumns: TableColumn<PayrollClosing>[] = [
@@ -208,9 +222,17 @@ export default function SellerPayrollPage() {
             type="month"
             className={styles.monthInput}
             value={periodMonth}
-            onChange={(e) => setPeriodMonth(e.target.value)}
+            onChange={(e) => e.target.value && setPeriodMonth(e.target.value)}
           />
         </FormField>
+        <Button
+          variant="secondary"
+          icon={<FontAwesomeIcon icon={faFilePdf} />}
+          onClick={handleExportSlip}
+          disabled={!sellerId || exportingSlip}
+        >
+          {exportingSlip ? 'Mengekspor...' : 'Export PDF'}
+        </Button>
       </div>
 
       {!sellerId ? (
@@ -225,7 +247,12 @@ export default function SellerPayrollPage() {
             {existingClosing?.status === 'draft' && <Badge tone="warning">Draft — belum dibayar</Badge>}
           </div>
           <div className={styles.statGrid}>
-            <StatCard label="Total Gaji Tier" value={formatRupiah(preview.totalTierSalary)} />
+            <StatCard label="Hari Bekerja/Jualan" value={`${preview.daysWorked} hari`} />
+            <StatCard label="Total Produk Terjual" value={`${preview.totalRotiQty} pcs`} />
+            <StatCard label="Total Produk Komisi Terjual" value={`${preview.totalCommissionQty} pcs`} />
+          </div>
+          <div className={styles.statGrid}>
+            <StatCard label="Total Gaji Harian" value={formatRupiah(preview.totalTierSalary)} />
             <StatCard label="Total Komisi" value={formatRupiah(preview.totalCommission)} />
             <StatCard label="Utang Belum Lunas" value={formatRupiah(preview.outstandingDebt)} />
             <StatCard label="Diusulkan Dipotong" value={formatRupiah(preview.debtDeduction)} />

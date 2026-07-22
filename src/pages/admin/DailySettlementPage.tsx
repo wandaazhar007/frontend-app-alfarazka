@@ -213,7 +213,14 @@ export default function DailySettlementPage() {
       <h1 className={styles.dateHeading}>{formatTanggal(date, 'panjang')}</h1>
       <PageHeader
         description="Input setoran cash dan settlement QRIS harian tiap penjual keliling."
-        actions={<input type="date" className={styles.dateInput} value={date} onChange={(e) => setDate(e.target.value)} />}
+        actions={
+          <input
+            type="date"
+            className={styles.dateInput}
+            value={date}
+            onChange={(e) => e.target.value && setDate(e.target.value)}
+          />
+        }
       />
 
       {loading ? (

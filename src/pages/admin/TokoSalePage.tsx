@@ -39,7 +39,7 @@ export default function TokoSalePage() {
   const { showToast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProductId, setSelectedProductId] = useState('');
-  const [qty, setQty] = useState(1);
+  const [qty, setQty] = useState<number | ''>('');
   const [unitPrice, setUnitPrice] = useState(0);
   const [cart, setCart] = useState<CartItem[]>(loadStoredCart);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qris'>('cash');
@@ -78,11 +78,11 @@ export default function TokoSalePage() {
 
   const addToCart = () => {
     const product = products.find((p) => p.id === selectedProductId);
-    if (!product || qty <= 0) return;
+    if (!product || qty === '' || qty <= 0) return;
 
     setCart((prev) => [...prev, { productId: product.id, productName: product.name, qty, unitPrice }]);
     setSelectedProductId('');
-    setQty(1);
+    setQty('');
     setUnitPrice(0);
   };
 
@@ -159,7 +159,14 @@ export default function TokoSalePage() {
               />
             </FormField>
             <FormField label="Qty" htmlFor="toko-qty">
-              <input id="toko-qty" type="number" value={qty} min={1} onChange={(e) => setQty(Number(e.target.value))} />
+              <input
+                id="toko-qty"
+                type="number"
+                value={qty}
+                min={1}
+                placeholder="0"
+                onChange={(e) => setQty(e.target.value === '' ? '' : Number(e.target.value))}
+              />
             </FormField>
             <div className={styles.priceDisplay}>
               <span className={styles.priceLabel}>Harga Satuan</span>
@@ -169,7 +176,7 @@ export default function TokoSalePage() {
               type="button"
               variant="secondary"
               onClick={addToCart}
-              disabled={!selectedProductId}
+              disabled={!selectedProductId || qty === '' || qty <= 0}
               icon={<FontAwesomeIcon icon={faPlus} />}
             >
               Tambah ke Keranjang

@@ -2,10 +2,8 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus,
-  faUtensils,
   faFloppyDisk,
   faTrashCan,
-  faCheck,
   faPenToSquare,
   faXmark,
   faFileExcel,
@@ -13,7 +11,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import api from '../../services/api';
 import type { Expense, ExpenseCategory } from '../../types/expense';
-import type { Seller } from '../../types/seller';
 import type { Paginated } from '../../types/pagination';
 import { formatRupiah, formatInputRupiah, parseRupiahInput, formatTanggal } from '../../utils/format';
 import todayJakarta from '../../utils/todayJakarta';
@@ -45,20 +42,14 @@ interface FormErrors {
   date?: string;
 }
 
-interface MealFormErrors {
-  sellerId?: string;
-  amount?: string;
-}
-
 export default function ExpensesPage() {
   const { showToast } = useToast();
   // Rentang tanggal untuk FILTER tabel — terpisah dari tanggal pengeluaran baru (state `date`
-  // di dalam modal tambah/edit, dan `mealDate` di modal uang makan), supaya mengganti filter
-  // tidak pernah mengubah tanggal yang tercatat saat admin menambah pengeluaran.
+  // di dalam modal tambah/edit), supaya mengganti filter tidak pernah mengubah tanggal yang
+  // tercatat saat admin menambah pengeluaran.
   const [fromDate, setFromDate] = useState(todayJakarta());
   const [toDate, setToDate] = useState(todayJakarta());
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
-  const [sellers, setSellers] = useState<Seller[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [total, setTotal] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
@@ -79,14 +70,6 @@ export default function ExpensesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  const [showMealModal, setShowMealModal] = useState(false);
-  const [mealDate, setMealDate] = useState(todayJakarta());
-  const [mealSellerId, setMealSellerId] = useState('');
-  const [mealAmount, setMealAmount] = useState<number | ''>('');
-  const [mealErrors, setMealErrors] = useState<MealFormErrors>({});
-  const [mealSubmitting, setMealSubmitting] = useState(false);
-  const [mealAddedIds, setMealAddedIds] = useState<string[]>([]);
 
   // Reload bisa dipicu berurutan (mis. ganti fromDate lalu toDate dengan cepat) — request ID
   // memastikan cuma response dari request TERAKHIR yang boleh meng-update state, apapun urutan
@@ -116,11 +99,15 @@ export default function ExpensesPage() {
   };
 
   const handleFromDateChange = (value: string) => {
+    // Browser native date picker "Clear" mengirim string kosong — abaikan supaya
+    // tanggal tidak pernah kosong (yang bikin halaman blank saat dipakai untuk fetch).
+    if (!value) return;
     setFromDate(value);
     if (value > toDate) setToDate(value);
   };
 
   const handleToDateChange = (value: string) => {
+    if (!value) return;
     setToDate(value);
     if (value < fromDate) setFromDate(value);
   };
@@ -139,14 +126,10 @@ export default function ExpensesPage() {
   useEffect(() => {
     const loadMeta = async () => {
       try {
-        const [categoriesRes, sellersRes] = await Promise.all([
-          api.get<ExpenseCategory[]>('/api/expense-categories'),
-          api.get<Seller[]>('/api/sellers'),
-        ]);
-        setCategories(categoriesRes.data);
-        setSellers(sellersRes.data.filter((s) => s.isActive));
+        const { data } = await api.get<ExpenseCategory[]>('/api/expense-categories');
+        setCategories(data);
       } catch {
-        showToast('danger', 'Gagal memuat data kategori/penjual.');
+        showToast('danger', 'Gagal memuat data kategori.');
       }
     };
     loadMeta();
@@ -162,8 +145,6 @@ export default function ExpensesPage() {
     loadExpenses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromDate, toDate, page]);
-
-  const mealCategory = categories.find((c) => c.name === MEAL_ALLOWANCE_CATEGORY);
 
   const validateForm = (): boolean => {
     const nextErrors: FormErrors = {};
@@ -232,61 +213,6 @@ export default function ExpensesPage() {
     }
   };
 
-  const openMealModal = () => {
-    if (!mealCategory) {
-      showToast('danger', `Kategori '${MEAL_ALLOWANCE_CATEGORY}' tidak ditemukan.`);
-      return;
-    }
-    setMealDate(todayJakarta());
-    setMealSellerId('');
-    setMealAmount('');
-    setMealErrors({});
-    setMealAddedIds([]);
-    setShowMealModal(true);
-  };
-
-  const closeMealModal = () => {
-    setShowMealModal(false);
-  };
-
-  const handleMealSellerChange = (sellerId: string) => {
-    setMealSellerId(sellerId);
-    const seller = sellers.find((s) => s.id === sellerId);
-    setMealAmount(seller ? seller.dailyMealAllowance : '');
-    setMealErrors({});
-  };
-
-  const handleAddMealAllowance = async () => {
-    const nextErrors: MealFormErrors = {};
-    if (!mealSellerId) nextErrors.sellerId = 'Penjual wajib dipilih.';
-    if (mealAmount === '' || mealAmount <= 0) nextErrors.amount = 'Nominal wajib diisi dan harus lebih dari 0.';
-    setMealErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0 || !mealCategory) return;
-
-    const seller = sellers.find((s) => s.id === mealSellerId);
-    if (!seller) return;
-
-    setMealSubmitting(true);
-
-    try {
-      await api.post('/api/expenses', {
-        categoryId: mealCategory.id,
-        amount: mealAmount,
-        description: `Uang makan - ${seller.name}`,
-        expenseDate: mealDate,
-      });
-      setMealAddedIds((prev) => [...prev, seller.id]);
-      setMealSellerId('');
-      setMealAmount('');
-      showToast('success', `Uang makan ${seller.name} berhasil ditambahkan.`);
-      await loadExpenses();
-    } catch {
-      showToast('danger', 'Gagal menyimpan uang makan penjual.');
-    } finally {
-      setMealSubmitting(false);
-    }
-  };
-
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -331,9 +257,6 @@ export default function ExpensesPage() {
       <div className={styles.actionsRow}>
         <Button variant="primary" icon={<FontAwesomeIcon icon={faPlus} />} onClick={openAddModal}>
           Tambah Pengeluaran
-        </Button>
-        <Button variant="secondary" icon={<FontAwesomeIcon icon={faUtensils} />} onClick={openMealModal}>
-          Uang Makan Penjual
         </Button>
       </div>
 
@@ -423,15 +346,7 @@ export default function ExpensesPage() {
         >
           <form onSubmit={handleSubmit} className={styles.form} noValidate>
             <FormField label="Tanggal" htmlFor="expense-date" required error={errors.date}>
-              <input
-                id="expense-date"
-                type="date"
-                value={date}
-                onChange={(e) => {
-                  setDate(e.target.value);
-                  setErrors((prev) => ({ ...prev, date: undefined }));
-                }}
-              />
+              <input id="expense-date" type="date" value={date} disabled />
             </FormField>
             <FormField
               label="Kategori"
@@ -453,7 +368,12 @@ export default function ExpensesPage() {
                 }}
                 placeholder="Cari kategori..."
                 emptyMessage="Kategori tidak ditemukan."
-                options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
+                options={categories
+                  // "Uang Makan Penjual" cuma boleh diinput lewat Stok Pagi (halaman itu otomatis
+                  // membawa sellerId-nya) — disembunyikan di sini, kecuali sedang mengedit
+                  // pengeluaran yang memang sudah berkategori itu (supaya tidak jadi invalid).
+                  .filter((c) => c.name !== MEAL_ALLOWANCE_CATEGORY || c.id === categoryId)
+                  .map((c) => ({ value: String(c.id), label: c.name }))}
               />
             </FormField>
             <FormField label="Nominal" htmlFor="expense-amount" required error={errors.amount}>
@@ -476,77 +396,7 @@ export default function ExpensesPage() {
         </Modal>
       )}
 
-      {showMealModal && (
-        <Modal
-          title="Uang Makan Penjual"
-          onClose={closeMealModal}
-          blurBackdrop
-        >
-          <p className={styles.mealModalHint}>
-            Tambahkan uang makan satu per satu sesuai penjual yang bekerja hari ini. Nominal terisi otomatis dari
-            uang makan harian penjual, tapi bisa diubah.
-          </p>
-
-          <div className={styles.mealModalForm}>
-            <FormField label="Tanggal" htmlFor="meal-date" required>
-              <input id="meal-date" type="date" value={mealDate} onChange={(e) => setMealDate(e.target.value)} />
-            </FormField>
-            <FormField label="Penjual" htmlFor="meal-seller" required error={mealErrors.sellerId}>
-              <Combobox
-                id="meal-seller"
-                value={mealSellerId}
-                onChange={handleMealSellerChange}
-                placeholder="Cari penjual..."
-                emptyMessage="Semua penjual aktif sudah ditambahkan hari ini."
-                options={sellers
-                  .filter((s) => !mealAddedIds.includes(s.id))
-                  .map((s) => ({ value: s.id, label: s.name }))}
-              />
-            </FormField>
-            <FormField label="Nominal" htmlFor="meal-amount" required error={mealErrors.amount}>
-              <input
-                id="meal-amount"
-                type="text"
-                inputMode="numeric"
-                placeholder="Rp. 0"
-                value={formatInputRupiah(mealAmount)}
-                onChange={(e) => {
-                  setMealAmount(parseRupiahInput(e.target.value));
-                  setMealErrors((prev) => ({ ...prev, amount: undefined }));
-                }}
-              />
-            </FormField>
-            <div className={styles.mealModalSubmitRow}>
-              <Button
-                variant="primary"
-                icon={<FontAwesomeIcon icon={faFloppyDisk} />}
-                onClick={handleAddMealAllowance}
-                disabled={mealSubmitting}
-              >
-                {mealSubmitting ? 'Menyimpan...' : 'Simpan'}
-              </Button>
-            </div>
-          </div>
-
-          {mealAddedIds.length > 0 && (
-            <div className={styles.mealModalAddedList}>
-              {mealAddedIds.map((id) => {
-                const seller = sellers.find((s) => s.id === id);
-                if (!seller) return null;
-                return (
-                  <Badge key={id} tone="success">
-                    <FontAwesomeIcon icon={faCheck} /> {seller.name}
-                  </Badge>
-                );
-              })}
-            </div>
-          )}
-        </Modal>
-      )}
-
-      {(submitting || mealSubmitting) && (
-        <LoadingOverlay message={mealSubmitting ? 'Menyimpan uang makan...' : 'Menyimpan pengeluaran...'} />
-      )}
+      {submitting && <LoadingOverlay message="Menyimpan pengeluaran..." />}
     </div>
   );
 }

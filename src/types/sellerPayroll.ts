@@ -2,12 +2,16 @@ export interface PayrollDailyBreakdown {
   date: string;
   rotiQty: number;
   tierSalary: number;
+  commissionQty: number;
   commissionAmount: number;
 }
 
 export interface PayrollPreview {
   totalTierSalary: number;
   totalCommission: number;
+  totalRotiQty: number;
+  totalCommissionQty: number;
+  daysWorked: number;
   outstandingDebt: number;
   debtDeduction: number;
   netPayout: number;

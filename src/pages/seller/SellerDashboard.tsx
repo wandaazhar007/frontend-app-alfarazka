@@ -48,12 +48,16 @@ export default function SellerDashboard() {
   const chartTo = rangeTouched ? toDate : todayJakarta();
 
   const handleFromDateChange = (value: string) => {
+    // Browser native date picker "Clear" mengirim string kosong — abaikan supaya
+    // tanggal tidak pernah kosong (yang bikin halaman blank saat dipakai untuk fetch).
+    if (!value) return;
     setFromDate(value);
     setRangeTouched(true);
     if (value > toDate) setToDate(value);
   };
 
   const handleToDateChange = (value: string) => {
+    if (!value) return;
     setToDate(value);
     setRangeTouched(true);
     if (value < fromDate) setFromDate(value);

@@ -37,7 +37,7 @@ interface LoanFormErrors {
 export default function SellerDebtsPage() {
   const { appUser } = useAuth();
   const { showToast } = useToast();
-  const [status, setStatus] = useState<'' | 'belum_lunas' | 'lunas'>('belum_lunas');
+  const [status, setStatus] = useState<'' | 'belum_lunas' | 'lunas'>('');
   const [debts, setDebts] = useState<SellerDebt[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -172,6 +172,11 @@ export default function SellerDebtsPage() {
     { key: 'seller', header: 'Penjual', render: (d) => d.sellerName },
     { key: 'source', header: 'Sumber', render: (d) => SOURCE_LABEL[d.source] },
     { key: 'date', header: 'Tanggal', render: (d) => formatTanggal(d.debtDate, 'pendek') },
+    {
+      key: 'paidOffDate',
+      header: 'Tanggal Pelunasan',
+      render: (d) => (d.status === 'lunas' && d.paidOffDate ? formatTanggal(d.paidOffDate, 'pendek') : '-'),
+    },
     { key: 'total', header: 'Utang', align: 'right', render: (d) => formatRupiah(d.totalAmount) },
     { key: 'paid', header: 'Terbayar', align: 'right', render: (d) => formatRupiah(d.amountPaid) },
     { key: 'outstanding', header: 'Sisa', align: 'right', render: (d) => formatRupiah(d.outstanding) },
@@ -310,7 +315,7 @@ export default function SellerDebtsPage() {
               />
             </FormField>
             <FormField label="Tanggal" htmlFor="loan-date" required>
-              <input id="loan-date" type="date" value={loanDate} onChange={(e) => setLoanDate(e.target.value)} />
+              <input id="loan-date" type="date" value={loanDate} onChange={(e) => e.target.value && setLoanDate(e.target.value)} />
             </FormField>
             <FormField label="Nominal" htmlFor="loan-amount" required error={loanErrors.amount}>
               <input

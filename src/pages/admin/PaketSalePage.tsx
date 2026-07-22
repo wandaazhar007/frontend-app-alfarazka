@@ -166,7 +166,13 @@ export default function PaketSalePage() {
               />
             </FormField>
             <FormField label="Tanggal" htmlFor="paket-date">
-              <input id="paket-date" type="date" value={saleDate} onChange={(e) => setSaleDate(e.target.value)} required />
+              <input
+                id="paket-date"
+                type="date"
+                value={saleDate}
+                onChange={(e) => e.target.value && setSaleDate(e.target.value)}
+                required
+              />
             </FormField>
             <FormField
               label="Total Harga (Negosiasi)"

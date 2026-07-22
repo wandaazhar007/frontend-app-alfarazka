@@ -19,7 +19,7 @@ import type { StockMovement } from '../../types/stockMovement';
 import type { KelilingStatusResponse } from '../../types/dailyReport';
 import type { ExpenseCategory } from '../../types/expense';
 import todayJakarta from '../../utils/todayJakarta';
-import { formatTanggal, formatInputRupiah, parseRupiahInput } from '../../utils/format';
+import { formatTanggal, formatRupiah, formatInputRupiah, parseRupiahInput } from '../../utils/format';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import Button from '../../components/Button/Button';
 import Badge from '../../components/Badge/Badge';
@@ -99,6 +99,11 @@ export default function StockMorningPage() {
   const [mealAmount, setMealAmount] = useState<number | ''>('');
   const [mealError, setMealError] = useState<string | undefined>();
   const [mealSubmitting, setMealSubmitting] = useState(false);
+  // Diisi kalau penjual ini SUDAH punya pengeluaran "Uang Makan Penjual" di tanggal
+  // ini (dicek ke API saat modal dibuka) — kalau ada, form nominal disembunyikan dan
+  // Simpan langsung lanjut ke stok pagi tanpa membuat pengeluaran baru (dicegah juga
+  // di backend lewat unique index expenses_seller_meal_unique).
+  const [existingMealAmount, setExistingMealAmount] = useState<number | null>(null);
 
   useEffect(() => {
     const payload: PersistedForm = { date, formSellerId, cart, originalProductIds, selectedProductId, cartQty };
@@ -240,10 +245,12 @@ export default function StockMorningPage() {
     setCart((prev) => prev.filter((c) => c.productId !== productId));
   };
 
+  const mealCategory = categories.find((c) => c.name === MEAL_ALLOWANCE_CATEGORY);
+
   // Klik "Simpan" pada form cart TIDAK langsung menyimpan stok pagi — modal Uang
   // Makan Penjual dibuka dulu, dan stok pagi baru benar-benar disimpan setelah
   // modal itu berhasil disimpan (lihat handleSaveMealAllowance).
-  const handleSubmitForm = () => {
+  const handleSubmitForm = async () => {
     if (!formSellerId) return;
 
     if (cart.length === 0 && originalProductIds.length === 0) {
@@ -254,25 +261,36 @@ export default function StockMorningPage() {
     const seller = sellers.find((s) => s.id === formSellerId);
     setMealAmount(seller ? seller.dailyMealAllowance : '');
     setMealError(undefined);
+    setExistingMealAmount(null);
     setMealModalSeller({ id: formSellerId, name: formSellerName ?? '' });
-  };
 
-  const mealCategory = categories.find((c) => c.name === MEAL_ALLOWANCE_CATEGORY);
+    if (mealCategory) {
+      try {
+        const { data } = await api.get<{ amount: number }[]>('/api/expenses', {
+          params: { date, seller_id: formSellerId, category_id: mealCategory.id },
+        });
+        if (data.length > 0) setExistingMealAmount(data[0].amount);
+      } catch {
+        /* Kalau gagal cek, biarkan form nominal tampil apa adanya — backend tetap menolak kalau dobel */
+      }
+    }
+  };
 
   // Cancel = batalkan seluruh aksi simpan (uang makan MAUPUN stok pagi) — form
   // cart tetap terbuka apa adanya supaya admin bisa lanjut edit atau coba lagi.
   const closeMealModal = () => {
     setMealModalSeller(null);
+    setExistingMealAmount(null);
   };
 
   const handleSaveMealAllowance = async () => {
     if (!mealModalSeller || !formSellerId) return;
 
-    if (!mealCategory) {
+    if (!existingMealAmount && !mealCategory) {
       showToast('danger', `Kategori '${MEAL_ALLOWANCE_CATEGORY}' tidak ditemukan.`);
       return;
     }
-    if (mealAmount === '' || mealAmount <= 0) {
+    if (existingMealAmount === null && (mealAmount === '' || mealAmount <= 0)) {
       setMealError('Nominal wajib diisi dan harus lebih dari 0.');
       return;
     }
@@ -289,19 +307,31 @@ export default function StockMorningPage() {
 
     setMealSubmitting(true);
     try {
-      await api.post('/api/expenses', {
-        categoryId: mealCategory.id,
-        amount: mealAmount,
-        description: `Uang makan - ${mealModalSeller.name}`,
-        expenseDate: date,
-      });
+      // Penjual ini sudah pernah dapat uang makan di tanggal ini — jangan input ulang,
+      // langsung lanjut simpan stok pagi saja.
+      if (existingMealAmount === null && mealCategory) {
+        await api.post('/api/expenses', {
+          categoryId: mealCategory.id,
+          amount: mealAmount,
+          description: `Uang makan - ${mealModalSeller.name}`,
+          expenseDate: date,
+          sellerId: mealModalSeller.id,
+        });
+      }
       await api.post('/api/stock-movements', { movementDate: date, items });
-      showToast('success', `Uang makan & stok pagi ${mealModalSeller.name} berhasil disimpan.`);
+      showToast(
+        'success',
+        existingMealAmount === null
+          ? `Uang makan & stok pagi ${mealModalSeller.name} berhasil disimpan.`
+          : `Stok pagi ${mealModalSeller.name} berhasil disimpan.`
+      );
       closeMealModal();
       cancelForm();
       await loadMovements();
-    } catch {
-      showToast('danger', 'Gagal menyimpan uang makan/stok pagi.');
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Gagal menyimpan uang makan/stok pagi.';
+      showToast('danger', message);
     } finally {
       setMealSubmitting(false);
     }
@@ -411,6 +441,9 @@ export default function StockMorningPage() {
               className={styles.dateInput}
               value={date}
               onChange={(e) => {
+                // Browser native date picker "Clear" mengirim string kosong — abaikan
+                // supaya tanggal tidak pernah kosong (yang bikin halaman blank).
+                if (!e.target.value) return;
                 setDate(e.target.value);
                 // Form Stok Pagi yang sedang terbuka mengacu ke tanggal saat dibuka —
                 // kalau tanggal diganti sementara form masih terbuka, tutup/reset form
@@ -578,33 +611,41 @@ export default function StockMorningPage() {
                 disabled={mealSubmitting}
                 icon={<FontAwesomeIcon icon={faFloppyDisk} />}
               >
-                {mealSubmitting ? 'Menyimpan...' : 'Simpan'}
+                {mealSubmitting ? 'Menyimpan...' : existingMealAmount === null ? 'Simpan' : 'Lanjut Simpan'}
               </Button>
             </>
           }
         >
           <p className={styles.mealModalHint}>
-            Isi uang makan untuk penjual ini terlebih dahulu — stok pagi akan ikut tersimpan setelah uang makan berhasil
-            disimpan.
+            {existingMealAmount === null
+              ? 'Isi uang makan untuk penjual ini terlebih dahulu — stok pagi akan ikut tersimpan setelah uang makan berhasil disimpan.'
+              : 'Uang makan penjual ini sudah pernah diinput hari ini. Klik Lanjut Simpan untuk menyimpan stok pagi saja.'}
           </p>
           <div className={styles.mealModalBadge}>
             <Badge tone="success">
               {mealModalSeller.name} — {formatTanggal(date, 'dash')}
             </Badge>
           </div>
-          <FormField label="Nominal" htmlFor="meal-amount" required error={mealError}>
-            <input
-              id="meal-amount"
-              type="text"
-              inputMode="numeric"
-              placeholder="Rp. 0"
-              value={formatInputRupiah(mealAmount)}
-              onChange={(e) => {
-                setMealAmount(parseRupiahInput(e.target.value));
-                setMealError(undefined);
-              }}
-            />
-          </FormField>
+          {existingMealAmount === null ? (
+            <FormField label="Nominal" htmlFor="meal-amount" required error={mealError}>
+              <input
+                id="meal-amount"
+                type="text"
+                inputMode="numeric"
+                placeholder="Rp. 0"
+                value={formatInputRupiah(mealAmount)}
+                onChange={(e) => {
+                  setMealAmount(parseRupiahInput(e.target.value));
+                  setMealError(undefined);
+                }}
+              />
+            </FormField>
+          ) : (
+            <Badge tone="success">
+              <FontAwesomeIcon icon={faCheck} /> {mealModalSeller.name} hari ini sudah dapat uang makan{' '}
+              {formatRupiah(existingMealAmount)}
+            </Badge>
+          )}
         </Modal>
       )}
 

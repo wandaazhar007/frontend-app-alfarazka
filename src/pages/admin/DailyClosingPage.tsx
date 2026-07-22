@@ -60,7 +60,12 @@ export default function DailyClosingPage() {
         description={'Hitung ulang & lihat ringkasan tutup buku harian: penjualan, HPP, pengeluaran, dan laba.'}
         actions={
           <>
-            <input type="date" className={styles.dateInput} value={date} onChange={(e) => setDate(e.target.value)} />
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={date}
+              onChange={(e) => e.target.value && setDate(e.target.value)}
+            />
             <Button variant="primary" onClick={handleGenerate} disabled={generating}>
               {generating ? 'Menghitung...' : 'Generate / Hitung Ulang'}
             </Button>

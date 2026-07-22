@@ -24,11 +24,15 @@ export default function DailyReportPage() {
   const [exporting, setExporting] = useState(false);
 
   const handleFromDateChange = (value: string) => {
+    // Browser native date picker "Clear" mengirim string kosong — abaikan supaya
+    // tanggal tidak pernah kosong (yang bikin halaman blank saat dipakai untuk fetch).
+    if (!value) return;
     setFromDate(value);
     if (value > toDate) setToDate(value);
   };
 
   const handleToDateChange = (value: string) => {
+    if (!value) return;
     setToDate(value);
     if (value < fromDate) setFromDate(value);
   };

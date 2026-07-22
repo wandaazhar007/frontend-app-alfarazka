@@ -15,6 +15,8 @@ export interface SellerDebt {
   outstanding: number;
   status: SellerDebtStatus;
   note: string | null;
+  /** Tanggal pembayaran terakhir (biasanya = tanggal lunas kalau status 'lunas') — null kalau belum ada pembayaran sama sekali. */
+  paidOffDate: string | null;
   createdAt: string;
 }
 

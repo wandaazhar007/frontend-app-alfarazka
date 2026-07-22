@@ -15,6 +15,8 @@ export interface Expense {
   categoryName: string;
   amount: number;
   description: string | null;
+  /** Diisi HANYA untuk pengeluaran "Uang Makan Penjual" — dipakai mencegah input dobel per penjual/tanggal. */
+  sellerId: string | null;
   expenseDate: string;
   createdBy: string;
   createdAt: string;
