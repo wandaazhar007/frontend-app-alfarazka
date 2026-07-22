@@ -307,11 +307,11 @@ export default function DailySettlementPage() {
           {expectedAmount !== null && (
             <div className={styles.settleBadgeRow}>
               <Badge tone="danger">Total uang penjualan yang harus di setor: {formatRupiah(expectedAmount)}</Badge>
-              {expectedAmount - (cashInput || 0) - (qrisInput || 0) > 0 && (
-                <Badge tone="danger">
-                  Total minus hari ini {formatRupiah(expectedAmount - (cashInput || 0) - (qrisInput || 0))}
-                </Badge>
-              )}
+              {typeof cashInput === 'number' &&
+                typeof qrisInput === 'number' &&
+                expectedAmount - cashInput - qrisInput > 0 && (
+                  <Badge tone="danger">Total minus hari ini {formatRupiah(expectedAmount - cashInput - qrisInput)}</Badge>
+                )}
             </div>
           )}
         </Modal>
