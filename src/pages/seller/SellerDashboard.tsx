@@ -13,6 +13,7 @@ import SalesTrendChart from '../../components/Chart/SalesTrendChart';
 import { useAuth } from '../../contexts/AuthContext';
 import type { StockMovement } from '../../types/stockMovement';
 import type { SellerMySales } from '../../types/sellerMySales';
+import type { SellerEarnings } from '../../types/sellerPayroll';
 import styles from './SellerDashboard.module.scss';
 
 function daysAgoJakarta(days: number): string {
@@ -43,6 +44,26 @@ export default function SellerDashboard() {
   const [rangeTouched, setRangeTouched] = useState(false);
   const [trendData, setTrendData] = useState<TrendPoint[]>([]);
   const [trendLoading, setTrendLoading] = useState(true);
+
+  // Rentang tanggal terpisah dari picker "Rekap Penjualan" di atas — section
+  // "Penghasilan" punya konteksnya sendiri (gaji tier + komisi), jadi diberi
+  // date range picker sendiri juga.
+  const [earnFromDate, setEarnFromDate] = useState(todayJakarta());
+  const [earnToDate, setEarnToDate] = useState(todayJakarta());
+  const [earnings, setEarnings] = useState<SellerEarnings | null>(null);
+  const [earningsLoading, setEarningsLoading] = useState(true);
+
+  const handleEarnFromDateChange = (value: string) => {
+    if (!value) return;
+    setEarnFromDate(value);
+    if (value > earnToDate) setEarnToDate(value);
+  };
+
+  const handleEarnToDateChange = (value: string) => {
+    if (!value) return;
+    setEarnToDate(value);
+    if (value < earnFromDate) setEarnFromDate(value);
+  };
 
   const chartFrom = rangeTouched ? fromDate : daysAgoJakarta(6);
   const chartTo = rangeTouched ? toDate : todayJakarta();
@@ -86,6 +107,32 @@ export default function SellerDashboard() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromDate, toDate]);
+
+  useEffect(() => {
+    const loadEarnings = async () => {
+      setEarningsLoading(true);
+      const startedAt = Date.now();
+      try {
+        const { data } = await api.get<SellerEarnings>('/api/seller/my-earnings', {
+          params: { from: earnFromDate, to: earnToDate },
+        });
+        setEarnings(data);
+      } catch {
+        setEarnings(null);
+      } finally {
+        // Request-nya sering selesai dalam hitungan milidetik (query ringan) — kalau
+        // langsung setEarningsLoading(false), skeleton-nya kelewat cepat utk kelihatan
+        // mata, jadi terasa seperti "tidak ada loading". Paksa tampil minimal sebentar.
+        const elapsed = Date.now() - startedAt;
+        const MIN_LOADING_MS = 350;
+        if (elapsed < MIN_LOADING_MS) {
+          await new Promise((resolve) => setTimeout(resolve, MIN_LOADING_MS - elapsed));
+        }
+        setEarningsLoading(false);
+      }
+    };
+    loadEarnings();
+  }, [earnFromDate, earnToDate]);
 
   useEffect(() => {
     const loadTrend = async () => {
@@ -137,46 +184,107 @@ export default function SellerDashboard() {
 
       {loading ? (
         <>
-          <SkeletonTable rows={3} />
-          <SkeletonStatCardRow count={3} />
+          <section className={[styles.section, styles.sectionStock].join(' ')}>
+            <h2 className={styles.sectionTitle}>Stok Hari Ini</h2>
+            <SkeletonTable rows={3} />
+          </section>
+          <section className={[styles.section, styles.sectionSales].join(' ')}>
+            <h2 className={styles.sectionTitle}>Rekap Penjualan</h2>
+            <SkeletonStatCardRow count={4} />
+          </section>
+          <section className={[styles.section, styles.sectionTrend].join(' ')}>
+            <h2 className={styles.sectionTitle}>Tren Penjualan</h2>
+            <Skeleton variant="chart" />
+          </section>
+          <section className={[styles.section, styles.sectionEarnings].join(' ')}>
+            <h2 className={styles.sectionTitle}>Penghasilan</h2>
+            <SkeletonStatCardRow count={6} />
+          </section>
         </>
       ) : error ? (
         <ErrorState onRetry={load} />
       ) : (
         <>
-          <h2 className={styles.sectionTitle}>Stok Hari Ini</h2>
-          {todayStock.length === 0 ? (
-            <EmptyState message="Belum ada stok yang diinput untuk hari ini." />
-          ) : (
-            <Table columns={columns} data={todayStock} rowKey={(m) => m.id} />
-          )}
+          <section className={[styles.section, styles.sectionStock].join(' ')}>
+            <h2 className={styles.sectionTitle}>Stok Hari Ini</h2>
+            {todayStock.length === 0 ? (
+              <EmptyState message="Belum ada stok yang diinput untuk hari ini." />
+            ) : (
+              <Table columns={columns} data={todayStock} rowKey={(m) => m.id} />
+            )}
+          </section>
 
-          <h2 className={styles.sectionTitle}>Rekap Penjualan</h2>
-          <div className={styles.selectedRangeRow}>
-            <Badge tone="success">
-              {fromDate === toDate
-                ? formatTanggal(fromDate, 'dash')
-                : `${formatTanggal(fromDate, 'dash')} s/d ${formatTanggal(toDate, 'dash')}`}
-            </Badge>
-          </div>
-          {mySales && (
-            <div className={styles.statGrid}>
-              <StatCard label="Setoran Cash" value={formatRupiah(mySales.cash)} />
-              <StatCard label="Settlement QRIS" value={formatRupiah(mySales.qris)} />
-              <StatCard label="Total Penjualan" value={formatRupiah(mySales.totalPenjualan)} variant="highlight" />
-              <StatCard label="Utang Saat Ini" value={formatRupiah(myDebt)} />
+          <section className={[styles.section, styles.sectionSales].join(' ')}>
+            <h2 className={styles.sectionTitle}>Rekap Penjualan</h2>
+            <div className={styles.selectedRangeRow}>
+              <Badge tone="success">
+                {fromDate === toDate
+                  ? formatTanggal(fromDate, 'dash')
+                  : `${formatTanggal(fromDate, 'dash')} s/d ${formatTanggal(toDate, 'dash')}`}
+              </Badge>
             </div>
-          )}
+            {mySales && (
+              <div className={styles.statGrid}>
+                <StatCard label="Setoran Cash" value={formatRupiah(mySales.cash)} />
+                <StatCard label="Settlement QRIS" value={formatRupiah(mySales.qris)} />
+                <StatCard label="Total Penjualan" value={formatRupiah(mySales.totalPenjualan)} variant="highlight" />
+                <StatCard label="Utang Saat Ini" value={formatRupiah(myDebt)} />
+              </div>
+            )}
+          </section>
 
-          <h2 className={styles.sectionTitle}>Tren Penjualan</h2>
-          {trendLoading ? (
-            <Skeleton variant="chart" />
-          ) : (
-            <SalesTrendChart
-              data={trendData}
-              title={rangeTouched ? 'Tren Penjualan Sesuai Rentang Terpilih' : 'Tren Penjualan 7 Hari Terakhir'}
-            />
-          )}
+          <section className={[styles.section, styles.sectionTrend].join(' ')}>
+            <h2 className={styles.sectionTitle}>Tren Penjualan</h2>
+            {trendLoading ? (
+              <Skeleton variant="chart" />
+            ) : (
+              <SalesTrendChart
+                data={trendData}
+                title={rangeTouched ? 'Tren Penjualan Sesuai Rentang Terpilih' : 'Tren Penjualan 7 Hari Terakhir'}
+              />
+            )}
+          </section>
+
+          <section className={[styles.section, styles.sectionEarnings].join(' ')}>
+            <h2 className={styles.sectionTitle}>Penghasilan</h2>
+            <div className={styles.earningsDateRow}>
+              <input
+                type="date"
+                className={styles.dateInput}
+                title="Dari Tanggal"
+                value={earnFromDate}
+                onChange={(e) => handleEarnFromDateChange(e.target.value)}
+              />
+              <input
+                type="date"
+                className={styles.dateInput}
+                title="Sampai Tanggal"
+                value={earnToDate}
+                onChange={(e) => handleEarnToDateChange(e.target.value)}
+              />
+            </div>
+            <div className={styles.selectedRangeRow}>
+              <Badge tone="warning">
+                {earnFromDate === earnToDate
+                  ? formatTanggal(earnFromDate, 'dash')
+                  : `${formatTanggal(earnFromDate, 'dash')} s/d ${formatTanggal(earnToDate, 'dash')}`}
+              </Badge>
+            </div>
+            {earningsLoading ? (
+              <SkeletonStatCardRow count={6} />
+            ) : earnings ? (
+              <div className={styles.statGrid}>
+                <StatCard label="Hari Bekerja/Jualan" value={`${earnings.daysWorked} hari`} />
+                <StatCard label="Total Gaji Harian" value={formatRupiah(earnings.totalTierSalary)} />
+                <StatCard label="Total Komisi" value={formatRupiah(earnings.totalCommission)} />
+                <StatCard label="Minus Setoran" value={`-${formatRupiah(earnings.totalMinusSetoran)}`} variant="danger" />
+                <StatCard label="Pinjaman" value={`-${formatRupiah(earnings.totalPinjaman)}`} variant="danger" />
+                <StatCard label="Total Penghasilan" value={formatRupiah(earnings.totalPenghasilan)} variant="success" />
+              </div>
+            ) : (
+              <EmptyState message="Gagal memuat data penghasilan." />
+            )}
+          </section>
         </>
       )}
     </div>

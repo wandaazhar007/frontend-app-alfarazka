@@ -8,9 +8,38 @@ Description: This SCSS file defines the styles for the SellerDashboard page in a
 @use '@/styles/variables' as *;
 @use '@/styles/mixins' as *;
 
+// Tiap section dibungkus card dengan tint pastel beda-beda (soft, selaras dengan
+// palet brand merah/krem) supaya batas antar section jelas tanpa harus pakai garis.
+.section {
+  border-radius: $radius-lg;
+  padding: $space-4;
+  margin-bottom: $space-5;
+  border: 1px solid transparent;
+}
+
+.sectionStock {
+  background: rgba($color-accent, 0.12);
+  border-color: rgba($color-accent, 0.25);
+}
+
+.sectionSales {
+  background: rgba($color-success, 0.07);
+  border-color: rgba($color-success, 0.18);
+}
+
+.sectionTrend {
+  background: rgba(99, 102, 241, 0.07);
+  border-color: rgba(99, 102, 241, 0.18);
+}
+
+.sectionEarnings {
+  background: rgba($color-warning, 0.09);
+  border-color: rgba($color-warning, 0.2);
+}
+
 .sectionTitle {
   font-size: 1.6rem;
-  margin: $space-5 0 $space-3;
+  margin: 0 0 $space-3;
 }
 
 .dateInput {
@@ -25,12 +54,19 @@ Description: This SCSS file defines the styles for the SellerDashboard page in a
   margin-bottom: $space-4;
 }
 
+.earningsDateRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  margin-bottom: $space-3;
+}
+
 .statGrid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: $space-3;
 
-  @include respond('tablet') {
-    grid-template-columns: repeat(3, 1fr);
+  @include respond('desktop') {
+    grid-template-columns: repeat(4, 1fr);
   }
 }

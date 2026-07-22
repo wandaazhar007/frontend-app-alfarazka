@@ -16,16 +16,25 @@ Description: This SCSS file defines the styles for the StatCard component in a f
 }
 
 .label {
-  font-size: 1.2rem;
+  // Mobile: sedikit lebih kecil supaya proporsional di grid 2 kolom sempit (§ layar kecil).
+  font-size: 1.1rem;
   color: $color-text-muted;
+
+  @include respond('tablet') {
+    font-size: 1.2rem;
+  }
 }
 
 .value {
   font-family: $font-family-heading;
-  font-size: 2.4rem;
+  font-size: 1.8rem;
   font-weight: 700;
   @include tabular-nums;
   color: $color-text-main;
+
+  @include respond('tablet') {
+    font-size: 2.4rem;
+  }
 }
 
 // Signature element — maksimal 1 per halaman (mis. "Penjualan Hari Ini")
@@ -39,5 +48,33 @@ Description: This SCSS file defines the styles for the StatCard component in a f
 
   .value {
     color: #fff;
+  }
+}
+
+// Varian sukses (hijau) — mis. "Total Penghasilan" di SellerDashboard, sama-sama
+// signature element tapi hijau (uang MASUK), beda dari .highlight yang merah (aksi/brand).
+.success {
+  background: linear-gradient(135deg, $color-success, #0f7c39);
+  border-color: transparent;
+
+  .label {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .value {
+    color: #fff;
+  }
+}
+
+// Varian bahaya — mis. "Minus Setoran"/"Pinjaman", nilai yang MENGURANGI penghasilan.
+// Background tetap putih (netral, sama seperti .card default) — cuma teksnya yang merah,
+// supaya tidak "berebut" jadi elemen paling mencolok kalau tampil bareng card lain.
+.danger {
+  .label {
+    color: $color-danger;
+  }
+
+  .value {
+    color: $color-danger;
   }
 }

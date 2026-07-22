@@ -11,16 +11,26 @@ Description: This SCSS file defines the styles for the Topbar component in a fro
 .topbar {
   height: $navbar-height;
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $space-3;
-  padding: 0 $space-4;
   background: $color-surface;
   border-bottom: 1px solid $color-border;
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+// Konten topbar (judul + tombol) dibatasi lebar yang sama dengan `.content` di
+// bawahnya (AppLayout.module.scss/SellerLayout.module.scss) supaya sejajar di layar
+// desktop lebar — `.topbar` sendiri tetap full-width supaya background bar-nya utuh.
+.inner {
+  height: 100%;
+  width: 100%;
+  max-width: $layout-max-width;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: 0 $space-4;
 
   @include respond('desktop') {
     padding: 0 $space-6;
@@ -59,6 +69,19 @@ Description: This SCSS file defines the styles for the Topbar component in a fro
 
 .titleBlock {
   min-width: 0;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+}
+
+.brandLogo {
+  width: 2.8rem;
+  height: 2.8rem;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .title {

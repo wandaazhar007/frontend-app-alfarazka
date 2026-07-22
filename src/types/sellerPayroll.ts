@@ -20,6 +20,21 @@ export interface PayrollPreview {
   unsettledDate: string | null;
 }
 
+// GET /api/seller/my-earnings?from=&to= — dipakai section "Penghasilan" di
+// SellerDashboard, rentang tanggal bebas (bukan harus 1 bulan kalender).
+export interface SellerEarnings {
+  totalTierSalary: number;
+  totalCommission: number;
+  totalRotiQty: number;
+  totalCommissionQty: number;
+  daysWorked: number;
+  totalPenghasilan: number;
+  /** Total kekurangan setoran yang TERJADI dalam rentang tanggal ini (berdasarkan debt_date). */
+  totalMinusSetoran: number;
+  /** Total pinjaman/kasbon yang TERJADI dalam rentang tanggal ini (berdasarkan debt_date). */
+  totalPinjaman: number;
+}
+
 export type PayrollClosingStatus = 'draft' | 'paid';
 
 export interface PayrollClosing {
