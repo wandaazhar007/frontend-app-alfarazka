@@ -29,7 +29,7 @@ import ConfirmModal from '../../components/Modal/ConfirmModal';
 import Modal from '../../components/Modal/Modal';
 import Combobox from '../../components/Combobox/Combobox';
 import LoadingOverlay from '../../components/LoadingOverlay/LoadingOverlay';
-import { SkeletonTable } from '../../components/Skeleton/Skeleton';
+import { SkeletonStatCardRow, SkeletonTable } from '../../components/Skeleton/Skeleton';
 import { useToast } from '../../components/Toast/ToastProvider';
 import styles from './ExpensesPage.module.scss';
 
@@ -297,14 +297,18 @@ export default function ExpensesPage() {
         </Badge>
       </div>
 
-      <div className={styles.statGrid}>
-        <StatCard label="Uang Makan" value={formatRupiah(totalMealAllowance)} />
-        <StatCard label="Lain-lain" value={formatRupiah(totalOther)} />
-        <StatCard label="Total Pengeluaran" value={formatRupiah(totalAmount)} variant="highlight" />
-      </div>
+      {loading ? (
+        <SkeletonStatCardRow count={3} />
+      ) : (
+        <div className={styles.statGrid}>
+          <StatCard label="Uang Makan" value={formatRupiah(totalMealAllowance)} />
+          <StatCard label="Lain-lain" value={formatRupiah(totalOther)} />
+          <StatCard label="Total Pengeluaran" value={formatRupiah(totalAmount)} variant="highlight" />
+        </div>
+      )}
 
       {loading ? (
-        <SkeletonTable rows={4} />
+        <SkeletonTable rows={4} columns={columns} />
       ) : error ? (
         <ErrorState onRetry={loadExpenses} />
       ) : expenses.length === 0 ? (

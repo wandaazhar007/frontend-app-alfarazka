@@ -3,10 +3,18 @@ export interface SellerReportRow {
   sellerName: string;
   cash: number;
   qris: number;
+  /** Kekurangan setoran (seller_debts, source='kekurangan_setoran') yang tercatat pada tanggal/rentang ini. */
+  minus: number;
+  /** Pinjaman/kasbon (seller_debts, source='pinjaman') yang tercatat pada tanggal/rentang ini. */
+  pinjaman: number;
   totalPenjualan: number;
   qtyOut: number;
   qtyReturned: number;
   qtySold: number;
+  /** Qty retur produk komisi (mis. Es Sirsak) — terpisah dari qtyReturned (roti saja). */
+  commissionQtyReturned: number;
+  /** Qty terjual produk komisi — terpisah dari qtySold (roti saja). */
+  commissionQtySold: number;
   isFullyReturned: boolean;
   isSettled: boolean;
   needsResettlement: boolean;
@@ -15,12 +23,18 @@ export interface SellerReportRow {
 export interface KelilingSummary {
   totalCash: number;
   totalQris: number;
+  /** Total kekurangan setoran (seller_debts, source='kekurangan_setoran') pada tanggal/rentang ini. */
+  totalMinus: number;
+  /** Total pinjaman/kasbon (seller_debts, source='pinjaman') pada tanggal/rentang ini. */
+  totalPinjaman: number;
   totalPenjualan: number;
   totalQtyOut: number;
   totalQtyReturned: number;
   totalQtySold: number;
   /** Qty terjual produk komisi (commission_per_unit > 0, mis. Es Sirsak) — TIDAK termasuk dalam totalQtySold. */
   totalKomisiQtySold: number;
+  /** Qty retur produk komisi — TIDAK termasuk dalam totalQtyReturned. */
+  totalKomisiQtyReturned: number;
 }
 
 // Response dari GET /api/reports/keliling-status — versi ringan dari DailyReport,

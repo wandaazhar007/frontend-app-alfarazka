@@ -42,6 +42,18 @@ Description: This SCSS file defines the styles for the SellerDashboard page in a
   margin: 0 0 $space-3;
 }
 
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $space-2;
+  margin-bottom: $space-3;
+
+  .sectionTitle {
+    margin: 0;
+  }
+}
+
 .dateInput {
   height: 4rem;
   border: 1px solid $color-border;

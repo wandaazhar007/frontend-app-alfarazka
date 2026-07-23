@@ -16,6 +16,18 @@ Description: This SCSS file defines the styles for the DailyReportPage in a fron
   @include focus-ring;
 }
 
+.selectedRangeRow {
+  margin-bottom: $space-4;
+}
+
+.selectedRangeBadge {
+  font-size: 1.4rem;
+}
+
+.skeletonGap {
+  margin-bottom: $space-5;
+}
+
 .statGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -53,4 +65,10 @@ Description: This SCSS file defines the styles for the DailyReportPage in a fron
       border-left: none;
     }
   }
+}
+
+// Cuma nilai (isi baris) kolom Minus/Pinjaman yang merah — header di <th> tetap
+// warna default (hitam), tidak kena style ini.
+.minusValue {
+  color: $color-danger;
 }

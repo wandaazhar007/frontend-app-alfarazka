@@ -180,7 +180,7 @@ export default function ReceivablesPage() {
       </div>
 
       {loading ? (
-        <SkeletonTable rows={4} />
+        <SkeletonTable rows={4} columns={columns} />
       ) : error ? (
         <ErrorState onRetry={loadReceivables} />
       ) : receivables.length === 0 ? (

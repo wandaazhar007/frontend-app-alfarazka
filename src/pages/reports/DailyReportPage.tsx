@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import api from '../../services/api';
 import type { DailyReport, SellerReportRow, TokoSaleRow, PaketSaleRow } from '../../types/dailyReport';
 import todayJakarta from '../../utils/todayJakarta';
-import { formatRupiah } from '../../utils/format';
+import { formatRupiah, formatTanggal } from '../../utils/format';
 import StatCard from '../../components/StatCard/StatCard';
+import Badge from '../../components/Badge/Badge';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import Button from '../../components/Button/Button';
 import Table, { type TableColumn } from '../../components/Table/Table';
@@ -70,9 +71,60 @@ export default function DailyReportPage() {
     { key: 'seller', header: 'Penjual', render: (r) => r.sellerName },
     { key: 'cash', header: 'Cash', align: 'right', render: (r) => formatRupiah(r.cash) },
     { key: 'qris', header: 'QRIS', align: 'right', render: (r) => formatRupiah(r.qris) },
+    { key: 'minus', header: 'Minus', align: 'right', render: (r) => <span className={styles.minusValue}>-{formatRupiah(r.minus)}</span> },
+    {
+      key: 'pinjaman',
+      header: 'Pinjaman',
+      align: 'right',
+      render: (r) => <span className={styles.minusValue}>-{formatRupiah(r.pinjaman)}</span>,
+    },
     { key: 'total', header: 'Total Penjualan', align: 'right', render: (r) => formatRupiah(r.totalPenjualan) },
     { key: 'sold', header: 'Roti Terjual', align: 'right', render: (r) => String(r.qtySold) },
     { key: 'returned', header: 'Roti Retur', align: 'right', render: (r) => String(r.qtyReturned) },
+    { key: 'commissionSold', header: 'Produk Komisi', align: 'right', render: (r) => String(r.commissionQtySold) },
+    { key: 'commissionReturned', header: 'Retur Produk Komisi', align: 'right', render: (r) => String(r.commissionQtyReturned) },
+  ];
+
+  const kelilingTotals = report?.keliling.sellers.reduce(
+    (acc, r) => ({
+      cash: acc.cash + r.cash,
+      qris: acc.qris + r.qris,
+      minus: acc.minus + r.minus,
+      pinjaman: acc.pinjaman + r.pinjaman,
+      totalPenjualan: acc.totalPenjualan + r.totalPenjualan,
+      qtySold: acc.qtySold + r.qtySold,
+      qtyReturned: acc.qtyReturned + r.qtyReturned,
+      commissionQtySold: acc.commissionQtySold + r.commissionQtySold,
+      commissionQtyReturned: acc.commissionQtyReturned + r.commissionQtyReturned,
+    }),
+    {
+      cash: 0,
+      qris: 0,
+      minus: 0,
+      pinjaman: 0,
+      totalPenjualan: 0,
+      qtySold: 0,
+      qtyReturned: 0,
+      commissionQtySold: 0,
+      commissionQtyReturned: 0,
+    }
+  );
+
+  const kelilingFooter = kelilingTotals && [
+    'Total',
+    formatRupiah(kelilingTotals.cash),
+    formatRupiah(kelilingTotals.qris),
+    <Badge tone="danger" key="minus-total">
+      -{formatRupiah(kelilingTotals.minus)}
+    </Badge>,
+    <Badge tone="danger" key="pinjaman-total">
+      -{formatRupiah(kelilingTotals.pinjaman)}
+    </Badge>,
+    formatRupiah(kelilingTotals.totalPenjualan),
+    String(kelilingTotals.qtySold),
+    String(kelilingTotals.qtyReturned),
+    String(kelilingTotals.commissionQtySold),
+    String(kelilingTotals.commissionQtyReturned),
   ];
 
   const tokoColumns: TableColumn<TokoSaleRow>[] = [
@@ -120,10 +172,40 @@ export default function DailyReportPage() {
         }
       />
 
+      <div className={styles.selectedRangeRow}>
+        <Badge tone="success" className={styles.selectedRangeBadge}>
+          {fromDate === toDate
+            ? formatTanggal(fromDate, 'dash')
+            : `${formatTanggal(fromDate, 'dash')} s/d ${formatTanggal(toDate, 'dash')}`}
+        </Badge>
+      </div>
+
       {loading ? (
         <>
-          <SkeletonStatCardRow count={3} />
-          <SkeletonTable rows={5} />
+          <div className={styles.skeletonGap}>
+            <SkeletonStatCardRow count={3} />
+          </div>
+          <div className={styles.skeletonGap}>
+            <SkeletonStatCardRow count={3} />
+          </div>
+
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Keliling — Penjualan per Penjual</h2>
+            <div className={styles.skeletonGap}>
+              <SkeletonStatCardRow count={4} />
+            </div>
+            <SkeletonTable rows={3} columns={kelilingColumns} />
+          </div>
+
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Toko — Transaksi Mini POS</h2>
+            <SkeletonTable rows={3} columns={tokoColumns} />
+          </div>
+
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Paket — Penjualan Custom</h2>
+            <SkeletonTable rows={3} columns={paketColumns} />
+          </div>
         </>
       ) : error || !report ? (
         <ErrorState onRetry={load} />
@@ -152,7 +234,7 @@ export default function DailyReportPage() {
               <EmptyState message="Tidak ada data penjualan keliling." />
             ) : (
               <div className={styles.sellerTable}>
-                <Table columns={kelilingColumns} data={report.keliling.sellers} rowKey={(s) => s.sellerId} />
+                <Table columns={kelilingColumns} data={report.keliling.sellers} rowKey={(s) => s.sellerId} footer={kelilingFooter} />
               </div>
             )}
           </div>

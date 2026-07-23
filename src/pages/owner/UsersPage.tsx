@@ -312,7 +312,7 @@ export default function UsersPage() {
       </div>
 
       {loading ? (
-        <SkeletonTable rows={4} />
+        <SkeletonTable rows={4} columns={listRole === 'admin' ? adminColumns : sellerColumns} />
       ) : error ? (
         <ErrorState onRetry={loadList} />
       ) : listRole === 'admin' ? (

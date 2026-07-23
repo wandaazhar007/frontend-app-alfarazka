@@ -185,8 +185,11 @@ export default function SellerDashboard() {
       {loading ? (
         <>
           <section className={[styles.section, styles.sectionStock].join(' ')}>
-            <h2 className={styles.sectionTitle}>Stok Hari Ini</h2>
-            <SkeletonTable rows={3} />
+            <div className={styles.sectionTitleRow}>
+              <h2 className={styles.sectionTitle}>Stok Hari Ini</h2>
+              <Badge tone="success">{formatTanggal(todayJakarta(), 'dash')}</Badge>
+            </div>
+            <SkeletonTable rows={3} columns={columns} />
           </section>
           <section className={[styles.section, styles.sectionSales].join(' ')}>
             <h2 className={styles.sectionTitle}>Rekap Penjualan</h2>
@@ -206,7 +209,10 @@ export default function SellerDashboard() {
       ) : (
         <>
           <section className={[styles.section, styles.sectionStock].join(' ')}>
-            <h2 className={styles.sectionTitle}>Stok Hari Ini</h2>
+            <div className={styles.sectionTitleRow}>
+              <h2 className={styles.sectionTitle}>Stok Hari Ini</h2>
+              <Badge tone="success">{formatTanggal(todayJakarta(), 'dash')}</Badge>
+            </div>
             {todayStock.length === 0 ? (
               <EmptyState message="Belum ada stok yang diinput untuk hari ini." />
             ) : (

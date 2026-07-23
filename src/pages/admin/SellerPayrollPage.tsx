@@ -295,7 +295,7 @@ export default function SellerPayrollPage() {
 
       <h2 className={styles.sectionTitle}>Riwayat Gaji Bulanan</h2>
       {loadingHistory ? (
-        <SkeletonTable rows={3} />
+        <SkeletonTable rows={3} columns={historyColumns} />
       ) : errorHistory ? (
         <ErrorState onRetry={loadHistory} />
       ) : history.length === 0 ? (

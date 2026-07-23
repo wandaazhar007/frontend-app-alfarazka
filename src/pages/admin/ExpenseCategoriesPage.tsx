@@ -202,7 +202,7 @@ export default function ExpenseCategoriesPage() {
       <SearchBox value={search} onChange={setSearch} placeholder="Cari nama kategori..." />
 
       {loading ? (
-        <SkeletonTable rows={3} />
+        <SkeletonTable rows={3} columns={columns} />
       ) : error ? (
         <ErrorState onRetry={loadCategories} />
       ) : categories.length === 0 ? (

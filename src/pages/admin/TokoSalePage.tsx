@@ -142,7 +142,7 @@ export default function TokoSalePage() {
       <PageHeader description="Catat penjualan langsung di toko (mini POS) — pilih produk, qty, dan metode bayar." />
 
       {loading ? (
-        <SkeletonTable rows={3} />
+        <SkeletonTable rows={3} columns={columns} />
       ) : error ? (
         <ErrorState onRetry={load} />
       ) : (

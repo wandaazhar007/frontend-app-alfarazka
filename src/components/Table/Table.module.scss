@@ -47,6 +47,19 @@ Description: This SCSS file defines the styles for the Table component in a fron
   @include tabular-nums;
 }
 
+// Baris total di bawah tabel (opsional, lihat prop `footer` di Table.tsx) — dibedakan
+// dari baris data biasa lewat background + font tebal, tidak ikut hover state.
+.footerRow td {
+  background: $color-surface-muted;
+  font-weight: 700;
+  border-top: 2px solid $color-border;
+}
+
+.footerCard {
+  background: $color-surface-muted;
+  font-weight: 700;
+}
+
 // ---- Mobile: card stacking (do not horizontal scroll — §8.12) ----
 .cardList {
   display: flex;

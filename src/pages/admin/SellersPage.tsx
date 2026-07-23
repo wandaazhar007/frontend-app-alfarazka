@@ -240,7 +240,7 @@ export default function SellersPage() {
       <SearchBox value={search} onChange={setSearch} placeholder="Cari nama penjual..." />
 
       {loading ? (
-        <SkeletonTable rows={4} />
+        <SkeletonTable rows={4} columns={columns} />
       ) : error ? (
         <ErrorState onRetry={loadSellers} />
       ) : sellers.length === 0 ? (

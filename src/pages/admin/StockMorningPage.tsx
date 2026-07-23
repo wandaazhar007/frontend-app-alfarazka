@@ -539,7 +539,7 @@ export default function StockMorningPage() {
       )}
 
       {loadingMeta || loading ? (
-        <SkeletonTable rows={5} />
+        <SkeletonTable rows={5} columns={columns} />
       ) : error ? (
         <ErrorState onRetry={loadMovements} />
       ) : tableRows.length === 0 ? (

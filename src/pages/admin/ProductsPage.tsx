@@ -248,7 +248,7 @@ export default function ProductsPage() {
       <SearchBox value={search} onChange={setSearch} placeholder="Cari nama produk..." />
 
       {loading ? (
-        <SkeletonTable rows={4} />
+        <SkeletonTable rows={4} columns={columns} />
       ) : error ? (
         <ErrorState onRetry={loadProducts} />
       ) : products.length === 0 ? (

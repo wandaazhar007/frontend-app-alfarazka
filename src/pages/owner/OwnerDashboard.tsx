@@ -212,7 +212,14 @@ export default function OwnerDashboard() {
       {loading ? (
         <>
           <SkeletonStatCardRow count={3} />
-          <SkeletonTable rows={4} />
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Keliling — Penjualan per Penjual</h2>
+            <SkeletonTable rows={4} columns={kelilingColumns} />
+          </div>
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Pengeluaran</h2>
+            <SkeletonTable rows={4} columns={expenseColumns} />
+          </div>
         </>
       ) : error || !report ? (
         <ErrorState onRetry={load} />

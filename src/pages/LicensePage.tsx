@@ -147,7 +147,7 @@ export default function LicensePage() {
       {loading ? (
         <>
           <SkeletonStatCardRow count={2} />
-          <SkeletonTable rows={3} />
+          <SkeletonTable rows={3} columns={paymentColumns} />
         </>
       ) : error ? (
         <ErrorState onRetry={load} />

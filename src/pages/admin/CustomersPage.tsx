@@ -206,7 +206,7 @@ export default function CustomersPage() {
       <SearchBox value={search} onChange={setSearch} placeholder="Cari nama pelanggan..." />
 
       {loading ? (
-        <SkeletonTable rows={4} />
+        <SkeletonTable rows={4} columns={columns} />
       ) : error ? (
         <ErrorState onRetry={loadCustomers} />
       ) : customers.length === 0 ? (

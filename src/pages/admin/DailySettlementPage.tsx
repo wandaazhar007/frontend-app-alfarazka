@@ -224,7 +224,7 @@ export default function DailySettlementPage() {
       />
 
       {loading ? (
-        <SkeletonTable rows={5} />
+        <SkeletonTable rows={5} columns={columns} />
       ) : error ? (
         <ErrorState onRetry={loadExisting} />
       ) : sellers.length === 0 ? (

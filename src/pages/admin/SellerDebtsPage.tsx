@@ -267,7 +267,7 @@ export default function SellerDebtsPage() {
       </div>
 
       {loading ? (
-        <SkeletonTable rows={4} />
+        <SkeletonTable rows={4} columns={columns} />
       ) : error ? (
         <ErrorState onRetry={loadDebts} />
       ) : debts.length === 0 ? (

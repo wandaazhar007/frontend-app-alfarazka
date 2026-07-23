@@ -16,13 +16,15 @@ interface TableProps<T> {
   rowKey: (row: T) => string;
   /** Extra class per row (e.g. highlight a row that needs attention) — applied to both the desktop <tr> and the mobile card. */
   rowClassName?: (row: T) => string | undefined;
+  /** Optional totals row rendered at the very bottom (desktop tfoot + a bolded card on mobile) — one entry per column, in the same order as `columns`. */
+  footer?: ReactNode[];
 }
 
 // Desktop/tablet (>= $breakpoints.tablet): regular table.
 // Mobile: stacked cards, one card per row — NO horizontal scroll (§8.12).
 // Empty/loading/error states are handled by the caller (EmptyState/Skeleton/ErrorState), not here.
 
-export default function Table<T>({ columns, data, rowKey, rowClassName }: TableProps<T>) {
+export default function Table<T>({ columns, data, rowKey, rowClassName, footer }: TableProps<T>) {
   return (
     <>
       <div className={styles.tableWrapper}>
@@ -47,6 +49,17 @@ export default function Table<T>({ columns, data, rowKey, rowClassName }: TableP
               </tr>
             ))}
           </tbody>
+          {footer && (
+            <tfoot>
+              <tr className={styles.footerRow}>
+                {columns.map((col, i) => (
+                  <td key={col.key} className={col.align === 'right' ? styles.alignRight : undefined}>
+                    {footer[i]}
+                  </td>
+                ))}
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 
@@ -63,6 +76,19 @@ export default function Table<T>({ columns, data, rowKey, rowClassName }: TableP
               ))}
           </div>
         ))}
+        {footer && (
+          <div className={[styles.rowCard, styles.footerCard].join(' ')}>
+            {columns.map(
+              (col, i) =>
+                !col.hideOnCard && (
+                  <div className={styles.rowCardItem} key={col.key}>
+                    <span className={styles.rowCardLabel}>{col.header}</span>
+                    <span className={styles.rowCardValue}>{footer[i]}</span>
+                  </div>
+                )
+            )}
+          </div>
+        )}
       </div>
     </>
   );
